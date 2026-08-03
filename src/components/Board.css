@@ -1,0 +1,146 @@
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #978a8a;
+  color: white;
+  padding-bottom: 10px;
+}
+
+.ui-panel {
+  height: calc(15vmin - 10px);
+  padding-top: 10px;
+}
+
+.board-12x12 {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: repeat(12, 1fr);
+  width: 85vmin;
+  height: 85vmin;
+  border: 4px solid #444;
+}
+
+.square {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.5vmin;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+}
+
+.white-sq {
+  background-color: #f0d9b5;
+  color: #b58863;
+}
+
+.black-sq {
+  background-color: #b58863;
+  color: #f0d9b5;
+}
+
+.square.selected {
+  background-color: #6aa792 !important;
+}
+
+.piece.w {
+  color: #ffffff;
+  text-shadow: 0 0 3px #000;
+}
+
+.piece.b {
+  color: #000000;
+  text-shadow: 0 0 3px #fff;
+}
+
+.ui-panel__hod {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.end-turn {
+  border: none;
+  margin: 10px auto;
+  padding: 12px 20px;
+  font-size: 18px;
+  font-weight: 500;
+  color: #fff;
+  text-align: center;
+  background-color: #0f5057;
+  border-radius: 6px;
+  display: block;
+  cursor: pointer;
+  transition: .6s;
+}
+
+.end-turn:hover {
+  background-color: #042e33;
+}
+
+.move-zone {
+  box-shadow: inset 0 0 30px rgba(92, 155, 201, 0.8);
+}
+
+.piece-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.piece-stats,
+.piece-health {
+  position: absolute;
+  display: flex;
+  gap: 5px;
+}
+
+.piece-name {
+  font-size: 20px;
+}
+
+.piece-stats i,
+.piece-health i {
+  font-size: 12px;
+  display: block;
+  margin-top: -3px;
+}
+
+.piece-stats span,
+.piece-health span {
+  font-size: 12px;
+  display: block;
+}
+
+.piece-health {
+  top: 0;
+  left: 0px;
+}
+
+.piece-stats {
+  bottom: 0;
+  left: 0px;
+}
+
+.win-screen {
+  position: absolute;
+  width: 100%;
+  height: 100svh;
+  text-align: center;
+  z-index: 10;
+  background-color: #5da2aa15;
+  font-size: 34px;
+  color: #b12626;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+}
