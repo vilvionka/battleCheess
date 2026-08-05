@@ -2,11 +2,13 @@ import { create } from 'zustand';
 import { BASE_PIECES, PIECE_TYPES } from '../game/constans';
 
 export const useTacticalStore = create((set, get) => ({
-  boardSize: 12,
+  boardSize: 8,
   board: {}, // Структура: { 'row,col': { type, color, hp, maxHp, atk, def } }
   turn: 'w',
   selectedSquare: null,
   gameStatus: 'playing',
+  damagePopups: [],
+  deadPopups: [],
 
   // Фазы внутри одного хода: 
   // 'select' - выбираем фигуру
@@ -17,15 +19,17 @@ export const useTacticalStore = create((set, get) => ({
 
   initGame: () => {
     const initialBoard = {
-      '0,5': { ...BASE_PIECES.King, color: 'b' },
-      '11,5': { ...BASE_PIECES.King, color: 'w' }
+      '0,3': { ...BASE_PIECES.King, color: 'b' },
+      '7,4': { ...BASE_PIECES.King, color: 'w' }
     };
     set({
       board: initialBoard,
       turn: 'w',
       selectedSquare: null,
       gameStatus: 'playing',
-      turnPhase: 'select'
+      turnPhase: 'select',
+      deadPopups: [],
+      damagePopups: []
     });
   },
 
@@ -177,7 +181,6 @@ export const useTacticalStore = create((set, get) => ({
   },
 
 
-  // БОЕВАЯ СИСТЕМА: Атака и Контрудар
   executeAttack: (attackerKey, targetKey) => {
     const { board, getAdjacencyType, canPieceAttackInDirection, turnPhase, getAvailableTargets } = get();
     const attacker = board[attackerKey];
@@ -186,58 +189,91 @@ export const useTacticalStore = create((set, get) => ({
     if (!attacker || !target) return;
 
     const newBoard = { ...board };
+    const newPopups = [];
+    const newDeadPopups = [];
 
-    // 1. Прямой урон
-    const dmgToTarget = Math.max(1, attacker.atk - target.def); // Минимум 1 урон
+    // ==========================================
+    // 1. ПРЯМОЙ УРОН (Игрок бьет врага)
+    // ==========================================
+    const dmgToTarget = Math.max(1, attacker.atk - target.def);
     target.hp -= dmgToTarget;
 
-    // 2. Проверка выживания цели и ответного удара
+    const popupTargetId = Date.now() + Math.random();
+    newPopups.push({ id: popupTargetId, squareKey: targetKey, amount: dmgToTarget });
+
     if (target.hp <= 0) {
       delete newBoard[targetKey]; // Цель погибла
-    } else {
-      newBoard[targetKey] = { ...target }; // Обновляем HP выжившего в сторе
 
-      // Проверяем контрудар: дотягивается ли выживший до нападающего по своему типу атаки?
+      const popupDeadTargetId = Date.now() + Math.random();
+      newDeadPopups.push({ id: popupDeadTargetId, squareKey: targetKey });
+    } else {
+      newBoard[targetKey] = { ...target }; // Обновляем HP выжившего врага
+
+      // ==========================================
+      // 2. КОНТРУДАР (Выживает и дает сдачи)
+      // ==========================================
       const revAdjType = getAdjacencyType(targetKey, attackerKey);
       if (canPieceAttackInDirection(target.type, target.color, revAdjType, targetKey, attackerKey)) {
-        const counterAtk = Math.ceil(target.atk / 2); // Половина атаки вверх
+        const counterAtk = Math.ceil(target.atk / 2);
         const dmgToAttacker = Math.max(1, counterAtk - attacker.def);
         attacker.hp -= dmgToAttacker;
+
+        const popupAttackerId = Date.now() + Math.random() + 1;
+        newPopups.push({ id: popupAttackerId, squareKey: attackerKey, amount: dmgToAttacker });
       }
     }
 
-    // 3. Проверяем выживание самого нападающего после контрудара
+    // 4. Проверяем выживание самого нападающего после контрудара
     if (attacker.hp <= 0) {
       delete newBoard[attackerKey];
+
+      const popupDeadAttackerId = Date.now() + Math.random();
+      newDeadPopups.push({ id: popupDeadAttackerId, squareKey: attackerKey });
     } else {
       newBoard[attackerKey] = { ...attacker };
     }
 
+    // ==========================================
+    // 3. СОХРАНЯЕМ ПОПАПЫ УРОНА И ТАЙМАУТ
+    // ==========================================
+    if (newPopups.length > 0) {
+      set((state) => ({ damagePopups: [...state.damagePopups, ...newPopups] }));
+      setTimeout(() => {
+        const idsToRemove = newPopups.map(p => p.id);
+        set((state) => ({ damagePopups: state.damagePopups.filter(p => !idsToRemove.includes(p.id)) }));
+      }, 1000);
+    }
+
+    // ==========================================
+    // 5. СОХРАНЯЕМ ПОПАПЫ СМЕРТЕЙ И ТАЙМАУТ (ИСПРАВЛЕНО)
+    // ==========================================
+    if (newDeadPopups.length > 0) {
+      set((state) => ({ deadPopups: [...state.deadPopups, ...newDeadPopups] }));
+      setTimeout(() => {
+        const idsToRemove = newDeadPopups.map(p => p.id);
+        set((state) => ({ deadPopups: state.deadPopups.filter(p => !idsToRemove.includes(p.id)) }));
+      }, 1000);
+    }
+
     set({ board: newBoard });
 
-    // Проверка условий победы (динамический поиск Королей по всей доске)
-    const figures = Object.values(newBoard); // Получаем массив всех фигур, которые сейчас есть на доске
-
+    // 6. Проверка условий победы
+    const figures = Object.values(newBoard);
     const isWhiteKingAlive = figures.some(p => p.type === 'King' && p.color === 'w');
     const isBlackKingAlive = figures.some(p => p.type === 'King' && p.color === 'b');
 
-    // Если белый король погиб — побеждают черные ('b-win')
     if (!isWhiteKingAlive) {
       set({ gameStatus: 'b-win' });
       return;
     }
-
-    // Если черный король погиб — побеждают белые ('w-win')
     if (!isBlackKingAlive) {
       set({ gameStatus: 'w-win' });
       return;
     }
 
-
-    // Изменение фазы хода после атаки
+    // 7. Изменение фазы хода
     let nextPhase = 'select';
     if (turnPhase === 'action' && newBoard[attackerKey]) {
-      // Если атаковали первыми и выжили — переходим в фазу "можно походить"
       nextPhase = 'has_attacked';
     }
 
@@ -247,6 +283,8 @@ export const useTacticalStore = create((set, get) => ({
       get().endTurn();
     }
   },
+
+
 
   // Завершение хода, сброс лимитов и спавн
   endTurn: () => {

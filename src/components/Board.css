@@ -16,10 +16,10 @@
 
 .board-12x12 {
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  grid-template-rows: repeat(12, 1fr);
-  width: 85vmin;
-  height: 85vmin;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  width: auto;
+  height: auto;
   border: 4px solid #444;
 }
 
@@ -31,16 +31,18 @@
   font-weight: bold;
   cursor: pointer;
   user-select: none;
+  width: 90px;
+  height: 90px;
 }
 
 .white-sq {
   background-color: #f0d9b5;
-  color: #b58863;
+  color: #ca371d;
 }
 
 .black-sq {
   background-color: #b58863;
-  color: #f0d9b5;
+  color: #ca371d;
 }
 
 .square.selected {
@@ -100,6 +102,13 @@
   position: absolute;
   display: flex;
   gap: 5px;
+  background-color: #524d4db2;
+  padding: 0 10px;
+  border-radius: 10px;
+  display: flex;
+  width: 80%;
+  align-items: center;
+  justify-content: center;
 }
 
 .piece-name {
@@ -121,12 +130,12 @@
 
 .piece-health {
   top: 0;
-  left: 0px;
+  left: 10%;
 }
 
 .piece-stats {
   bottom: 0;
-  left: 0px;
+  left: 10%;
 }
 
 .win-screen {
@@ -143,4 +152,85 @@
   align-items: center;
   flex-direction: column;
   justify-content: center;
+}
+
+.damage-popup {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ff4757;
+  font-weight: 600;
+  font-size: 20px;
+  text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(255, 71, 87, 0.5);
+  pointer-events: none;
+  z-index: 10;
+  animation: floatUpAndFade 1.4s ease-out forwards;
+}
+
+/* Сама анимация взлета и исчезновения */
+@keyframes floatUpAndFade {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(0) scale(0.6);
+  }
+
+  20% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-10px) scale(1.8);
+    /* Слегка увеличивается при ударе */
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-50px) scale(1.4);
+  }
+}
+
+.square {
+  position: relative;
+}
+
+.death-popup {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ff4757;
+  font-weight: 600;
+  font-size: 20px;
+  text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(255, 71, 87, 0.5);
+  pointer-events: none;
+  z-index: 10;
+  animation: floatFade 1.9s ease-out forwards;
+}
+
+
+@keyframes floatFade {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(0) scale(0.6);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0px) scale(1.8);
+    /* Слегка увеличивается при ударе */
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(0px) scale(1.4);
+  }
+}
+
+.piece-image-container {
+  width: 100%;
+  height: 100%;
+}
+
+.piece-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
