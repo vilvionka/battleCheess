@@ -16,12 +16,16 @@ export const useTacticalStore = create((set, get) => ({
   // 'has_attacked' - если сначала атаковали, можно еще походить
   // 'has_moved' - если сначала походили, можно еще атаковать
   turnPhase: 'select',
+  // 1. ДОБАВЛЯЕМ СЧЕТЧИКИ ВСЕГО СОЗДАННЫХ ФИГУР ЗА ИГРУ
+  spawnedCountW: 1, // Король уже на поле со старта
+  spawnedCountB: 1, // Король уже на поле со старта
 
   initGame: () => {
     const initialBoard = {
       '0,3': { ...BASE_PIECES.King, color: 'b' },
       '7,4': { ...BASE_PIECES.King, color: 'w' }
     };
+
     set({
       board: initialBoard,
       turn: 'w',
@@ -29,7 +33,9 @@ export const useTacticalStore = create((set, get) => ({
       gameStatus: 'playing',
       turnPhase: 'select',
       deadPopups: [],
-      damagePopups: []
+      damagePopups: [],
+      spawnedCountW: 1,
+      spawnedCountB: 1
     });
   },
 
@@ -300,7 +306,11 @@ export const useTacticalStore = create((set, get) => ({
   getPieceCount: (color) => Object.values(get().board).filter(p => p.color === color).length,
 
   spawnRandomPiece: (color) => {
-    const { getPieceCount, board, boardSize } = get();
+    const { getPieceCount, board, boardSize, spawnedCountW, spawnedCountB } = get();
+    // 1. ПРОВЕРКА НА ОБЩИЙ ЛИМИТ ЗА ИГРУ (МАКСИМУМ 8)
+    const totalSpawned = color === 'w' ? spawnedCountW : spawnedCountB;
+    if (totalSpawned >= 8) return;
+
     if (getPieceCount(color) >= 5) return;
 
     const row = color === 'w' ? boardSize - 1 : 0;
@@ -313,11 +323,16 @@ export const useTacticalStore = create((set, get) => ({
     const randomCol = freeCols[Math.floor(Math.random() * freeCols.length)];
     const randomType = PIECE_TYPES[Math.floor(Math.random() * PIECE_TYPES.length)];
 
-    set({
-      board: {
-        ...board,
-        [`${row},${randomCol}`]: { ...BASE_PIECES[randomType], color }
-      }
-    });
+    if (color === 'w') {
+      set({
+        board: { ...board, [`${row},${randomCol}`]: { ...BASE_PIECES[randomType], color } },
+        spawnedCountW: spawnedCountW + 1
+      });
+    } else {
+      set({
+        board: { ...board, [`${row},${randomCol}`]: { ...BASE_PIECES[randomType], color } },
+        spawnedCountB: spawnedCountB + 1
+      });
+    }
   }
 }));
