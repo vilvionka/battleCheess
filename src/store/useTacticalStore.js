@@ -175,30 +175,45 @@ export const useTacticalStore = create((set, get) => ({
   executeAttack: (attackerKey, targetKey) => {
     const { board, getAdjacencyType, canPieceAttackInDirection, turnPhase } = get();
 
-    const attacker = { ...board[attackerKey] };
-    const target = { ...board[targetKey] };
+    // 1. БЕЗОПАСНАЯ ПРОВЕРКА (Берем ссылки, ничего не копируя)
+    const originalAttacker = board[attackerKey];
+    const originalTarget = board[targetKey];
 
-    if (!board[attackerKey] || !board[targetKey]) return;
+    // Если кого-то нет — мгновенно и безопасно выходим, код никогда не упадет
+    if (!originalAttacker || !originalTarget) return;
 
+    // 2. ПОДГОТОВКА НОВЫХ ДАННЫХ
     const newBoard = { ...board };
     const newPopups = [];
     const newDeadPopups = [];
 
-    // 1. Расчет прямого урона
+    // Создаем изолированные копии объектов для безопасного изменения их HP
+    const target = { ...originalTarget };
+    const attacker = { ...originalAttacker }; // ТЕПЕРЬ ПЕРЕМЕННАЯ СУЩЕСТВУЕТ И БЕЗОПАСНА
+
+    // ==========================================
+    // 1. ПРЯМОЙ УРОН (Игрок бьет врага)
+    // ==========================================
     const dmgToTarget = Math.max(1, attacker.atk - target.def);
     target.hp -= dmgToTarget;
 
     const popupTargetId = `${Date.now()}-t-${Math.random()}`;
     newPopups.push({ id: popupTargetId, squareKey: targetKey, amount: dmgToTarget });
 
+    // Обновление цели на доске
     if (target.hp <= 0) {
-      delete newBoard[targetKey];
+      delete newBoard[targetKey]; // Враг умер, удаляем из новой доски
       newDeadPopups.push({ id: `${Date.now()}-dt-${Math.random()}`, squareKey: targetKey });
     } else {
-      newBoard[targetKey] = target;
+      newBoard[targetKey] = target; // Враг выжил, сохраняем обновленную копию
+    }
 
-      // 2. Логика контрудара в ответ
+    // ==========================================
+    // 2. ЛОГИКА КОНТРУДАРА В ОТВЕТ (Только если цель выжила!)
+    // ==========================================
+    if (target.hp > 0) {
       const revAdjType = getAdjacencyType(targetKey, attackerKey);
+
       if (canPieceAttackInDirection(target.type, target.color, revAdjType, targetKey, attackerKey)) {
         const counterAtk = Math.ceil(target.atk / 2);
         const dmgToAttacker = Math.max(1, counterAtk - attacker.def);
@@ -209,7 +224,9 @@ export const useTacticalStore = create((set, get) => ({
       }
     }
 
+    // ==========================================
     // 3. Проверяем выживание самого нападающего
+    // ==========================================
     if (attacker.hp <= 0) {
       delete newBoard[attackerKey];
       newDeadPopups.push({ id: `${Date.now()}-da-${Math.random()}`, squareKey: attackerKey });
@@ -217,7 +234,9 @@ export const useTacticalStore = create((set, get) => ({
       newBoard[attackerKey] = attacker;
     }
 
+    // ==========================================
     // 4. Менеджмент поп-апов урона
+    // ==========================================
     if (newPopups.length > 0) {
       set((state) => ({ damagePopups: [...state.damagePopups, ...newPopups] }));
       setTimeout(() => {
@@ -226,7 +245,9 @@ export const useTacticalStore = create((set, get) => ({
       }, 1000);
     }
 
+    // ==========================================
     // 5. Менеджмент поп-апов смертей
+    // ==========================================
     if (newDeadPopups.length > 0) {
       set((state) => ({ deadPopups: [...state.deadPopups, ...newDeadPopups] }));
       setTimeout(() => {
@@ -235,9 +256,12 @@ export const useTacticalStore = create((set, get) => ({
       }, 1000);
     }
 
+    // Записываем обновленную доску в Zustand
     set({ board: newBoard });
 
+    // ==========================================
     // 6. Проверка условий победы
+    // ==========================================
     const figures = Object.values(newBoard);
     const isWhiteKingAlive = figures.some(p => p.type === 'King' && p.color === 'w');
     const isBlackKingAlive = figures.some(p => p.type === 'King' && p.color === 'b');
@@ -251,7 +275,9 @@ export const useTacticalStore = create((set, get) => ({
       return;
     }
 
+    // ==========================================
     // 7. Смена фаз
+    // ==========================================
     let nextPhase = 'end_turn';
     if (turnPhase === 'action' && newBoard[attackerKey]) {
       nextPhase = 'has_attacked';
@@ -259,11 +285,12 @@ export const useTacticalStore = create((set, get) => ({
 
     if (nextPhase === 'end_turn') {
       set({ activeSquareKey: null });
-      get().endTurn();
+      get().endTurn(); // Завершаем ход
     } else {
       set({ turnPhase: nextPhase });
     }
   },
+
 
   // Завершение хода
   endTurn: () => {
