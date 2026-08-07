@@ -234,3 +234,316 @@
   height: 100%;
   object-fit: cover;
 }
+
+
+.turn-queue-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 15px;
+  background: #222;
+  padding: 10px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.queue-title {
+  color: #fff;
+  font-size: 14px;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.queue-line {
+  display: flex;
+  gap: 8px;
+}
+
+.queue-card {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  border: 2px solid #555;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #333;
+  transition: transform 0.2s;
+}
+
+.queue-card img {
+  width: 85%;
+  height: 85%;
+  object-fit: contain;
+}
+
+.queue-card.w {
+  border-color: #fff;
+  background: #444;
+}
+
+.queue-card.b {
+  border-color: #000;
+  background: #111;
+}
+
+/* Подсветка текущего ходящего в ленте */
+.queue-card.active-turn {
+  transform: scale(1.15);
+  border-color: #ffcc00;
+  box-shadow: 0 0 10px #ffcc00;
+}
+
+.queue-speed {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: #ff5722;
+  color: white;
+  font-size: 10px;
+  padding: 1px 3px;
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: sans-serif;
+  background: #1e1e1e;
+  padding: 20px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* ГЛАВНАЯ СЕТКА ДОСКИ */
+.board-grid {
+  display: grid;
+  width: 100%;
+  max-width: 560px;
+  /* Идеальный размер для десктопа и мобилок */
+  aspect-ratio: 1 / 1;
+  /* Делает доску строго квадратной */
+  border: 4px solid #333;
+  background: #444;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+/* КЛЕТКИ ДОСКИ */
+.square {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.white-sq {
+  background: #f0d9b5;
+}
+
+.black-sq {
+  background: #b58863;
+}
+
+/* ПОДСВЕТКИ ФАЗ */
+.selected {
+  background: #7fffd4 !important;
+}
+
+.move-zone {
+  box-shadow: inset 0 0 0 4px #00ff00;
+  background-color: rgba(0, 255, 0, 0.15);
+}
+
+.attack-zone {
+  background: #ff4500 !important;
+}
+
+/* КАРТОЧКА ФИГУРЫ ВНУТРИ КЛЕТКИ */
+.piece-card {
+  width: 90%;
+  height: 90%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+.piece-image-container {
+  width: 60%;
+  height: 60%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.piece-avatar {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* ХАРАКТЕРИСТИКИ ФИГУР */
+.piece-health,
+.piece-stats {
+  font-size: 11px;
+  font-weight: bold;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 1px 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* ЛЕНТА ОЧЕРЕДИ ХОДОВ */
+.turn-queue-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 15px;
+  background: #2b2b2b;
+  padding: 10px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 560px;
+  box-sizing: border-box;
+}
+
+.queue-title {
+  color: #aaa;
+  font-size: 12px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.queue-line {
+  display: flex;
+  gap: 8px;
+}
+
+.queue-card {
+  position: relative;
+  width: 45px;
+  height: 45px;
+  border: 2px solid #555;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.queue-card.w {
+  background: #e0e0e0;
+  border-color: #ccc;
+}
+
+.queue-card.b {
+  background: #3a3a3a;
+  border-color: #222;
+}
+
+.queue-card img {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+}
+
+.queue-card.active-turn {
+  transform: scale(1.1);
+  border-color: #ffcc00;
+  box-shadow: 0 0 8px #ffcc00;
+}
+
+.queue-speed {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: #ff5722;
+  color: white;
+  font-size: 9px;
+  padding: 1px 3px;
+  border-radius: 3px;
+}
+
+/* ПОПАПЫ */
+.damage-popup,
+.death-popup {
+  position: absolute;
+  font-weight: bold;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.damage-popup {
+  color: #ff3333;
+  font-size: 18px;
+  top: 5px;
+  animation: floatUp 1s ease-out forwards;
+}
+
+.death-popup {
+  font-size: 24px;
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+}
+
+.ui-panel {
+  margin-bottom: 15px;
+  color: #fff;
+}
+
+.end-turn {
+  background: #ff9800;
+  border: none;
+  padding: 6px 12px;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 5px;
+}
