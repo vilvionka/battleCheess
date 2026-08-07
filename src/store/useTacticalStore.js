@@ -47,68 +47,105 @@ export const useTacticalStore = create((set, get) => ({
     get().calculateNextTurns();
   },
 
-  // Алгоритм симуляции шкал готовности (ATB) для построения ленты ходов
-  calculateNextTurns: () => {
-    const { board } = get();
-    if (Object.keys(board).length === 0) return;
-
-    // Создаем копию шкал ATB для симуляции ходов наперед
-    const simAtb = {};
-    Object.keys(board).forEach(key => {
-      simAtb[key] = board[key].atb || 0;
-    });
-
-    const queue = [];
-    const ATB_THRESHOLD = 100; // Порог готовности хода
-
-    // Наполняем виртуальную ленту ходов до 6 штук
-    while (queue.length < 6) {
-      Object.keys(board).forEach(key => {
-        simAtb[key] += board[key].speed;
-      });
-
-      const readyKeys = Object.keys(board)
-        .filter(key => simAtb[key] >= ATB_THRESHOLD)
-        .sort((a, b) => simAtb[b] - simAtb[a]);
-
-      readyKeys.forEach(key => {
-        if (queue.length < 6) {
-          queue.push(key);
-          simAtb[key] -= ATB_THRESHOLD;
-        }
-      });
-    }
-
-    // ПРИМЕНЯЕМ ПРОДВИЖЕНИЕ ВРЕМЕНИ НА ДОСКЕ СИНХРОННО С ЛЕНТОЙ
-    const newBoard = { ...board };
-    const realTurnFound = queue[0]; // Первой ходит та фигура, которая стоит на 0 месте в ленте!
-
-    // Вычисляем, сколько тиков "времени" нужно, чтобы лидер добежал до порога 100
-    const leaderCurrentAtb = newBoard[realTurnFound].atb || 0;
-    const neededAtb = Math.max(0, 100 - leaderCurrentAtb);
-    const timeTicks = Math.ceil(neededAtb / newBoard[realTurnFound].speed);
-
-    // Наращиваем ATB ВСЕМ фигурам строго на это количество тиков
-    Object.keys(newBoard).forEach(key => {
-      const currentAtb = newBoard[key].atb || 0;
-      newBoard[key] = {
-        ...newBoard[key],
-        atb: currentAtb + (newBoard[key].speed * timeTicks)
-      };
-    });
-
-    // Официально списываем 100 очков у того, чей ход наступил
-    newBoard[realTurnFound].atb -= 100;
-
-    set({
-      board: newBoard,
-      activeSquareKey: realTurnFound,
-      actionQueue: queue,
-      turnPhase: 'action'
-    });
+  // ВАЛИДАЦИЯ ТИПОВ СОСЕДСТВА КЛЕТОК
+  getAdjacencyType: (fromKey, toKey) => {
+    const [r1, c1] = fromKey.split(',').map(Number);
+    const [r2, c2] = toKey.split(',').map(Number);
+    const dr = Math.abs(r1 - r2);
+    const dc = Math.abs(c1 - c2);
+    if (dr > 1 || dc > 1 || (dr === 0 && dc === 0)) return null;
+    if (dr === 0 || dc === 0) return 'straight';
+    if (dr === dc) return 'diagonal';
+    return null;
   },
 
+  // ПРОВЕРКА НАПРАВЛЕНИЯ АТАКИ
+  canPieceAttackInDirection: (type, color, direction, fromKey, toKey) => {
+    if (type === 'King' || type === 'Queen' || type === 'Knight') return true;
+    if (type === 'Rook') return direction === 'straight';
+    if (type === 'Bishop') return direction === 'diagonal';
+    if (type === 'Pawn') {
+      if (direction !== 'diagonal') return false;
+      const [r1] = fromKey.split(',').map(Number);
+      const [r2] = toKey.split(',').map(Number);
+      return color === 'w' ? r2 < r1 : r2 > r1;
+    }
+    return false;
+  },
 
+  // ВАЛИДАЦИЯ ДВИЖЕНИЯ ФИГУРЫ В ПУСТУЮ ЗОНУ
+  isValidMoveZone: (fromKey, toKey) => {
+    const { board, boardSize } = get();
+    const piece = board[fromKey];
+    if (!piece) return false;
+
+    const [r1, c1] = fromKey.split(',').map(Number);
+    const [r2, c2] = toKey.split(',').map(Number);
+    const dr = Math.abs(r1 - r2);
+    const dc = Math.abs(c1 - c2);
+
+    if (r2 < 0 || r2 >= boardSize || c2 < 0 || c2 >= boardSize) return false;
+    if (board[toKey]) return false;
+
+    if (piece.type === 'Knight') {
+      return (dr === 2 && dc === 1) || (dr === 1 && dc === 2);
+    }
+
+    let isStraight = r1 === r2 || c1 === c2;
+    let isDiagonal = dr === dc;
+
+    if (piece.type === 'King') return (isStraight || isDiagonal) && dr <= 1 && dc <= 1;
+    if (piece.type === 'Rook') if (!isStraight || dr > 3 || dc > 3) return false;
+    if (piece.type === 'Bishop') if (!isDiagonal || dr > 4) return false;
+    if (piece.type === 'Queen') if (!(isStraight || isDiagonal) || dr > 5 || dc > 5) return false;
+
+    if (piece.type === 'Pawn') {
+      const step = piece.color === 'w' ? -1 : 1;
+      if (c1 !== c2) return false;
+      if (r2 - r1 === step) return true;
+      const isStartRow = piece.color === 'w' ? r1 === 6 : r1 === 1;
+      if (isStartRow && r2 - r1 === step * 2) {
+        return !board[`${r1 + step},${c1}`];
+      }
+      return false;
+    }
+
+    const rowStep = r2 === r1 ? 0 : (r2 > r1 ? 1 : -1);
+    const colStep = c2 === c1 ? 0 : (c2 > c1 ? 1 : -1);
+    let currR = r1 + rowStep;
+    let currC = c1 + colStep;
+
+    while (currR !== r2 || currC !== c2) {
+      if (board[`${currR},${currC}`]) return false;
+      currR += rowStep;
+      currC += colStep;
+    }
+    return true;
+  },
+
+  // ПОИСК ДОСТУПНЫХ ВРАГОВ ДЛЯ АТАКЫ БЛИЖНЕГО БОЯ
+  getAvailableTargets: (squareKey) => {
+    const { board, getAdjacencyType, canPieceAttackInDirection } = get();
+    const attacker = board[squareKey];
+    if (!attacker) return [];
+    const [r, c] = squareKey.split(',').map(Number);
+    const targets = [];
+
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const tKey = `${r + dr},${c + dc}`;
+        const target = board[tKey];
+        if (target && target.color !== attacker.color) {
+          const adjType = getAdjacencyType(squareKey, tKey);
+          if (canPieceAttackInDirection(attacker.type, attacker.color, adjType, squareKey, tKey)) {
+            targets.push(tKey);
+          }
+        }
+      }
+    }
+    return targets;
+  },
   // Перемещение активной фигуры
   movePieceAction: (fromKey, toKey) => {
     const { board, turnPhase, getAvailableTargets } = get();
@@ -236,103 +273,71 @@ export const useTacticalStore = create((set, get) => ({
     calculateNextTurns();
   },
 
-  // ВАЛИДАЦИЯ ТИПОВ СОСЕДСТВА КЛЕТОК
-  getAdjacencyType: (fromKey, toKey) => {
-    const [r1, c1] = fromKey.split(',').map(Number);
-    const [r2, c2] = toKey.split(',').map(Number);
-    const dr = Math.abs(r1 - r2);
-    const dc = Math.abs(c1 - c2);
-    if (dr > 1 || dc > 1 || (dr === 0 && dc === 0)) return null;
-    if (dr === 0 || dc === 0) return 'straight';
-    if (dr === dc) return 'diagonal';
-    return null;
-  },
+  // Алгоритм симуляции шкал готовности (ATB) для построения ленты ходов
+  calculateNextTurns: () => {
+    const { board } = get();
+    if (Object.keys(board).length === 0) return;
 
-  // ПРОВЕРКА НАПРАВЛЕНИЯ АТАКИ
-  canPieceAttackInDirection: (type, color, direction, fromKey, toKey) => {
-    if (type === 'King' || type === 'Queen' || type === 'Knight') return true;
-    if (type === 'Rook') return direction === 'straight';
-    if (type === 'Bishop') return direction === 'diagonal';
-    if (type === 'Pawn') {
-      if (direction !== 'diagonal') return false;
-      const [r1] = fromKey.split(',').map(Number);
-      const [r2] = toKey.split(',').map(Number);
-      return color === 'w' ? r2 < r1 : r2 > r1;
-    }
-    return false;
-  },
+    // Создаем копию шкал ATB для симуляции ходов наперед
+    const simAtb = {};
+    Object.keys(board).forEach(key => {
+      simAtb[key] = board[key].atb || 0;
+    });
 
-  // ВАЛИДАЦИЯ ДВИЖЕНИЯ ФИГУРЫ В ПУСТУЮ ЗОНУ
-  isValidMoveZone: (fromKey, toKey) => {
-    const { board, boardSize } = get();
-    const piece = board[fromKey];
-    if (!piece) return false;
+    const queue = [];
+    const ATB_THRESHOLD = 100; // Порог готовности хода
 
-    const [r1, c1] = fromKey.split(',').map(Number);
-    const [r2, c2] = toKey.split(',').map(Number);
-    const dr = Math.abs(r1 - r2);
-    const dc = Math.abs(c1 - c2);
+    // Наполняем виртуальную ленту ходов до 6 штук
+    while (queue.length < 6) {
+      Object.keys(board).forEach(key => {
+        simAtb[key] += board[key].speed;
+      });
 
-    if (r2 < 0 || r2 >= boardSize || c2 < 0 || c2 >= boardSize) return false;
-    if (board[toKey]) return false;
+      const readyKeys = Object.keys(board)
+        .filter(key => simAtb[key] >= ATB_THRESHOLD)
+        .sort((a, b) => simAtb[b] - simAtb[a]);
 
-    if (piece.type === 'Knight') {
-      return (dr === 2 && dc === 1) || (dr === 1 && dc === 2);
-    }
-
-    let isStraight = r1 === r2 || c1 === c2;
-    let isDiagonal = dr === dc;
-
-    if (piece.type === 'King') return (isStraight || isDiagonal) && dr <= 1 && dc <= 1;
-    if (piece.type === 'Rook') if (!isStraight || dr > 3 || dc > 3) return false;
-    if (piece.type === 'Bishop') if (!isDiagonal || dr > 4) return false;
-    if (piece.type === 'Queen') if (!(isStraight || isDiagonal) || dr > 5 || dc > 5) return false;
-
-    if (piece.type === 'Pawn') {
-      const step = piece.color === 'w' ? -1 : 1;
-      if (c1 !== c2) return false;
-      if (r2 - r1 === step) return true;
-      const isStartRow = piece.color === 'w' ? r1 === 6 : r1 === 1;
-      if (isStartRow && r2 - r1 === step * 2) {
-        return !board[`${r1 + step},${c1}`];
-      }
-      return false;
-    }
-
-    const rowStep = r2 === r1 ? 0 : (r2 > r1 ? 1 : -1);
-    const colStep = c2 === c1 ? 0 : (c2 > c1 ? 1 : -1);
-    let currR = r1 + rowStep;
-    let currC = c1 + colStep;
-
-    while (currR !== r2 || currC !== c2) {
-      if (board[`${currR},${currC}`]) return false;
-      currR += rowStep;
-      currC += colStep;
-    }
-    return true;
-  },
-
-  // ПОИСК ДОСТУПНЫХ ВРАГОВ ДЛЯ АТАКЫ БЛИЖНЕГО БОЯ
-  getAvailableTargets: (squareKey) => {
-    const { board, getAdjacencyType, canPieceAttackInDirection } = get();
-    const attacker = board[squareKey];
-    if (!attacker) return [];
-    const [r, c] = squareKey.split(',').map(Number);
-    const targets = [];
-
-    for (let dr = -1; dr <= 1; dr++) {
-      for (let dc = -1; dc <= 1; dc++) {
-        if (dr === 0 && dc === 0) continue;
-        const tKey = `${r + dr},${c + dc}`;
-        const target = board[tKey];
-        if (target && target.color !== attacker.color) {
-          const adjType = getAdjacencyType(squareKey, tKey);
-          if (canPieceAttackInDirection(attacker.type, attacker.color, adjType, squareKey, tKey)) {
-            targets.push(tKey);
-          }
+      readyKeys.forEach(key => {
+        if (queue.length < 6) {
+          queue.push(key);
+          simAtb[key] -= ATB_THRESHOLD;
         }
-      }
+      });
     }
-    return targets;
+
+    // ПРИМЕНЯЕМ ПРОДВИЖЕНИЕ ВРЕМЕНИ НА ДОСКЕ СИНХРОННО С ЛЕНТОЙ
+    const newBoard = { ...board };
+    const realTurnFound = queue[0]; // Первой ходит та фигура, которая стоит на 0 месте в ленте!
+
+    // Вычисляем, сколько тиков "времени" нужно, чтобы лидер добежал до порога 100
+    const leaderCurrentAtb = newBoard[realTurnFound].atb || 0;
+    const neededAtb = Math.max(0, 100 - leaderCurrentAtb);
+    const timeTicks = Math.ceil(neededAtb / newBoard[realTurnFound].speed);
+
+    // Наращиваем ATB ВСЕМ фигурам строго на это количество тиков
+    Object.keys(newBoard).forEach(key => {
+      const currentAtb = newBoard[key].atb || 0;
+      newBoard[key] = {
+        ...newBoard[key],
+        atb: currentAtb + (newBoard[key].speed * timeTicks)
+      };
+    });
+
+    // Официально списываем 100 очков у того, чей ход наступил
+    newBoard[realTurnFound].atb -= 100;
+
+    set({
+      board: newBoard,
+      activeSquareKey: realTurnFound,
+      actionQueue: queue,
+      turnPhase: 'action'
+    });
   },
+
+
+
+
+
+
+
 }));
