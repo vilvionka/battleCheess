@@ -1,17 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+* {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+}
+
+.name-game {
+  font-family: "Black Ops One", system-ui;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 50px;
+  color: gold;
+  text-align: center;
+  display: block;
+  width: 100%;
+}
+
+
 .game-container {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100vh;
   background-color: #978a8a;
   color: white;
+  gap: 20px;
+  justify-content: space-between;
+  padding: 0 30px;
+}
+
+.game-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 728px;
+  flex-shrink: 0;
   padding-bottom: 10px;
+  display: flex;
+  padding-bottom: 30px;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  position: relative;
+}
+
+.game-left {
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  height: 100vh;
+  display: flex;
+  padding-bottom: 30px;
+  gap: 20px;
+}
+
+.ui-container {
+  display: flex;
+  gap: 20px;
+  height: 87px;
+  padding: 20px 0;
+  margin-bottom: 20px;
+  color: #fff;
+  width: 100%;
+  max-width: 728px;
+  align-items: center;
+  box-sizing: border-box;
+  flex-direction: column;
+}
+
+.turn-queue-container {
+  display: flex;
+  flex-direction: column;
+  background: #2b2b2b;
+  padding: 10px;
+  border-radius: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px;
 }
 
 .ui-panel {
-  height: calc(15vmin - 10px);
-  padding-top: 10px;
+  flex-shrink: 0;
+  display: flex;
+  gap: 20px;
 }
 
 .board-12x12 {
@@ -46,7 +120,8 @@
 }
 
 .square.selected {
-  background-color: #6aa792 !important;
+  background-color: #ffcc00 !important;
+  box-shadow: 0 0 8px #ffcc00;
 }
 
 .piece.w {
@@ -83,8 +158,38 @@
   background-color: #042e33;
 }
 
+.start-turn {
+  border: none;
+  margin: 10px auto;
+  padding: 12px 20px;
+  font-size: 18px;
+  font-weight: 500;
+  color: #fff;
+  text-align: center;
+  background-color: #0f5057;
+  border-radius: 6px;
+  display: block;
+  cursor: pointer;
+  transition: .6s;
+}
+
+.undo-btn {
+  border: none;
+  margin: 10px auto;
+  padding: 12px 20px;
+  font-size: 18px;
+  font-weight: 500;
+  color: #fff;
+  text-align: center;
+  background-color: #0f5057;
+  border-radius: 6px;
+  display: block;
+  cursor: pointer;
+  transition: .6s;
+}
+
 .move-zone {
-  box-shadow: inset 0 0 30px rgba(92, 155, 201, 0.8);
+  box-shadow: inset 0 0 30px #ffcc00cc;
 }
 
 .piece-card {
@@ -144,7 +249,7 @@
   height: 100svh;
   text-align: center;
   z-index: 10;
-  background-color: #5da2aa15;
+  background-color: #5da2aa8a;
   font-size: 34px;
   color: #b12626;
   font-weight: 600;
@@ -152,6 +257,22 @@
   align-items: center;
   flex-direction: column;
   justify-content: center;
+}
+
+.restart-btn {
+  padding: 12px 24px;
+  font-size: 1.2rem;
+  background-color: #e7900d;
+  /* Зеленая кнопка */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.restart-btn:hover {
+  background-color: #ff9800;
 }
 
 .damage-popup {
@@ -236,24 +357,18 @@
 }
 
 
-.turn-queue-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 15px;
-  background: #222;
-  padding: 10px;
-  border-radius: 8px;
-  width: 100%;
-  max-width: 500px;
-}
+
 
 .queue-title {
   color: #fff;
-  font-size: 14px;
-  margin-bottom: 5px;
-  text-transform: uppercase;
+  font-size: 18px;
+  margin-bottom: 16px;
+  font-weight: bold;
   letter-spacing: 1px;
+  color: #f1a80a;
+  border-bottom: 1px solid #3a3a44;
+  text-align: left;
+  padding-bottom: 4px;
 }
 
 .queue-line {
@@ -261,24 +376,9 @@
   gap: 8px;
 }
 
-.queue-card {
-  position: relative;
-  width: 50px;
-  height: 50px;
-  border: 2px solid #555;
-  border-radius: 6px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #333;
-  transition: transform 0.2s;
-}
 
-.queue-card img {
-  width: 85%;
-  height: 85%;
-  object-fit: contain;
-}
+
+
 
 .queue-card.w {
   border-color: #fff;
@@ -335,28 +435,16 @@
 
 
 
-.game-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-family: sans-serif;
-  background: #1e1e1e;
-  padding: 20px;
-  min-height: 100vh;
-  box-sizing: border-box;
-}
-
 /* ГЛАВНАЯ СЕТКА ДОСКИ */
 .board-grid {
   display: grid;
-  width: 100%;
-  max-width: 560px;
-  /* Идеальный размер для десктопа и мобилок */
+  width: auto;
   aspect-ratio: 1 / 1;
-  /* Делает доску строго квадратной */
   border: 4px solid #333;
   background: #444;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 /* КЛЕТКИ ДОСКИ */
@@ -383,10 +471,7 @@
   background: #7fffd4 !important;
 }
 
-.move-zone {
-  box-shadow: inset 0 0 0 4px #00ff00;
-  background-color: rgba(0, 255, 0, 0.15);
-}
+
 
 .attack-zone {
   background: #ff4500 !important;
@@ -404,8 +489,8 @@
 }
 
 .piece-image-container {
-  width: 60%;
-  height: 60%;
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -431,26 +516,6 @@
   gap: 2px;
 }
 
-/* ЛЕНТА ОЧЕРЕДИ ХОДОВ */
-.turn-queue-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 15px;
-  background: #2b2b2b;
-  padding: 10px;
-  border-radius: 8px;
-  width: 100%;
-  max-width: 560px;
-  box-sizing: border-box;
-}
-
-.queue-title {
-  color: #aaa;
-  font-size: 12px;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-}
 
 .queue-line {
   display: flex;
@@ -459,13 +524,15 @@
 
 .queue-card {
   position: relative;
-  width: 45px;
-  height: 45px;
+  width: 65px;
+  height: 65px;
   border: 2px solid #555;
   border-radius: 6px;
   display: flex;
   justify-content: center;
   align-items: center;
+  background: #333;
+  transition: transform 0.2s;
 }
 
 .queue-card.w {
@@ -533,17 +600,181 @@
   }
 }
 
-.ui-panel {
-  margin-bottom: 15px;
-  color: #fff;
-}
+
 
 .end-turn {
   background: #ff9800;
   border: none;
-  padding: 6px 12px;
+  padding: 16px 22px;
   color: white;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.battle-logs-container {
+  margin-top: 20px;
+  background: #1e1e24;
+  border: 2px solid #3a3a44;
+  border-radius: 8px;
+  padding: 12px;
+  width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.logs-title {
+  color: #f1a80a;
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #3a3a44;
+  padding-bottom: 4px;
+}
+
+.logs-list {
+  max-height: 200px;
+  /* Высота блока логов, дальше пойдет скролл */
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 4px;
+}
+
+/* Кастомизация скроллбара для красоты */
+.logs-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.logs-list::-webkit-scrollbar-thumb {
+  background: #4a4a5a;
+  border-radius: 2px;
+}
+
+.log-item {
+  font-size: 0.85rem;
+  color: #cdcdcd;
+  line-height: 1.3;
+  padding: 4px;
+  border-left: 2px solid #4a4a5a;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Подсветка самого последнего (свежего) действия */
+.log-item.latest-log {
+  color: #ffffff;
+  border-left-color: #4caf50;
+  background: rgba(76, 175, 80, 0.1);
+  font-weight: 500;
+}
+
+.log-empty {
+  font-size: 0.85rem;
+  color: #7a7a8a;
+  text-align: center;
+  font-style: italic;
+  padding: 20px 0;
+}
+
+
+
+
+/* Подсветка разрешенной линии для расстановки (7 ряд) */
+.square.setup-zone {
+  background-color: #ffd70033 !important;
+  border: 2px dashed #ffd700;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.square.setup-zone:hover {
+  background-color: rgba(46, 204, 113, 0.4) !important;
+}
+
+/* Контейнер скамейки запасных */
+.setup-bench-container {
+  background: #2c3e50;
+  border-radius: 8px;
+  padding: 15px;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  width: 100%;
+}
+
+.bench-title {
+  margin-bottom: 15px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #455a64;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 28px;
+}
+
+.bench-title span {
+  color: #f1c40f;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.bench-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bench-piece-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: #34495e;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: grab;
+  border: 1px solid #455a64;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.bench-piece-item:active {
+  cursor: grabbing;
+  transform: scale(0.95);
+}
+
+.bench-piece-item:hover {
+  background: #415b76;
+}
+
+.bench-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.bench-name {
+  font-weight: 500;
+}
+
+.setup-hint {
+  font-size: 12px;
+  color: #bdc3c7;
+  text-align: center;
   margin-top: 5px;
 }

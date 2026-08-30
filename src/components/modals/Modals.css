@@ -1,0 +1,172 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+.modal-content {
+  background: #1a252f;
+  border-radius: 12px;
+  border: 1px solid #34495e;
+  padding: 25px;
+  width: 100%;
+  max-width: 550px;
+  color: white;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #34495e;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #f1c40f;
+  font-size: 22px;
+}
+
+.close-modal-btn {
+  background: none;
+  border: none;
+  color: #7f8c8d;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.close-modal-btn:hover {
+  color: #e74c3c;
+}
+
+.modal-subtitle {
+  font-size: 14px;
+  margin-bottom: 20px;
+  color: #bdc3c7;
+}
+
+.highlight {
+  color: #f1c40f;
+  font-weight: bold;
+}
+
+/* Стили для карточек прокачки */
+.upgrade-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.upgrade-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #2c3e50;
+  padding: 12px 18px;
+  border-radius: 8px;
+  border: 1px solid #455a64;
+}
+
+.piece-type-title {
+  font-weight: bold;
+  color: #fff;
+  font-size: 16px;
+  margin-right: 10px;
+}
+
+.piece-level-tag {
+  background: #f1c40f;
+  color: #1a252f;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.piece-upgrade-desc {
+  font-size: 13px;
+  color: #bdc3c7;
+  margin: 5px 0 0 0;
+}
+
+.buy-upgrade-btn {
+  background: #2ecc71;
+  border: none;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+  font-size: 12px;
+  transition: background 0.2s;
+  min-width: 120px;
+}
+
+.buy-upgrade-btn:hover:not(:disabled) {
+  background: #27ae60;
+}
+
+.buy-upgrade-btn:disabled {
+  background: #7f8c8d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Таблица лидеров */
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  text-align: left;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: 12px;
+  border-bottom: 1px solid #34495e;
+}
+
+.leaderboard-table th {
+  color: #95a5a6;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.top-one {
+  color: #f1c40f;
+  font-weight: bold;
+  background: rgba(241, 196, 15, 0.05);
+}
+
+.top-two {
+  color: #e67e22;
+  font-weight: bold;
+}
+
+.top-three {
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+.modal-loading {
+  text-align: center;
+  padding: 30px;
+  color: #bdc3c7;
+}
