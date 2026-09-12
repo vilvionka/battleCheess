@@ -203,7 +203,7 @@ export function Board() {
 
         <div className='game-center'>
           <div className='ui-container'>
-            <span className="name-game">BattleChess</span>
+
           </div>
 
           <div className="board-grid" style={{ gridTemplateColumns: `repeat(${boardSize}, 1fr)` }}>
@@ -232,14 +232,15 @@ export function Board() {
             })}
           </div>
 
-          {gameStatus !== 'playing' && gameStatus !== 'setup' && (
-            <Win initGame={initGame} gameStatus={gameStatus} />
-          )}
+
         </div>
 
         <div className='game-left'>
           <Chat />
         </div>
+        {gameStatus !== 'playing' && gameStatus !== 'setup' && (
+          <Win initGame={initGame} gameStatus={gameStatus} />
+        )}
       </div>
     </>
   );

@@ -1,4 +1,5 @@
 import React from 'react';
+import './Square.css';
 
 export function Square({
   row,
@@ -46,34 +47,47 @@ export function Square({
       {activeDeadPopups.map(popup => <div key={popup.id} className="death-popup">💀</div>)}
       {activePopups.map(popup => <div key={popup.id} className="damage-popup">-{popup.amount}</div>)}
 
+
       {/* Отображение фигуры внутри клетки */}
       {piece && (
-        <div
-          className={`piece-card ${piece.color}`}
-          draggable={gameStatus === 'setup' && piece.color === 'w'}
-          onDragStart={(e) => {
-            if (gameStatus === 'setup') {
-              e.dataTransfer.setData('text/plain', key);
-            }
-          }}
-          onClick={(e) => {
-            if (gameStatus === 'setup' && piece.color === 'w') {
-              e.stopPropagation(); // Отменяем клик по самой клетке
-              removeWhitePiece(key);
-            }
-          }}
-        >
-          <div className="piece-image-container">
-            <img
-              src={PIECE_IMAGES[`${piece.type}_${piece.color}`]}
-              alt={`${piece.color} ${piece.type}`}
-              className="piece-avatar"
-            />
+        <>
+          {/* 🌑 РЕАЛИСТИЧНАЯ ТЕНЬ ПОД ФИГУРКОЙ */}
+          <div className="piece-shadow"></div>
+
+          <div
+            className={`piece-card ${piece.color}`}
+            draggable={gameStatus === 'setup' && piece.color === 'w'}
+            onDragStart={(e) => {
+              if (gameStatus === 'setup') {
+                e.dataTransfer.setData('text/plain', key);
+              }
+            }}
+            onClick={(e) => {
+              if (gameStatus === 'setup' && piece.color === 'w') {
+                e.stopPropagation();
+                removeWhitePiece(key);
+              }
+            }}
+          >
+            {/* Плашка уровня */}
+            <div className={`piece-level-badge ${piece.level === 5 ? 'max-level-shine' : ''}`}>
+              Lvl {piece.level || 1}
+            </div>
+
+            <div className="piece-image-container">
+              <img
+                src={PIECE_IMAGES[`${piece.type}_${piece.color}`]}
+                alt={`${piece.color} ${piece.type}`}
+                className="piece-avatar"
+              />
+            </div>
+            <div className="piece-health"><i>❤️</i><span>{piece.hp}/{piece.maxHp}</span></div>
+            <div className="piece-stats"><i>🛡️</i><span>{piece.atk}/{piece.def}</span></div>
           </div>
-          <div className="piece-health"><i>❤️</i><span>{piece.hp}/{piece.maxHp}</span></div>
-          <div className="piece-stats"><i>🛡️</i><span>{piece.atk}/{piece.def}</span></div>
-        </div>
+        </>
       )}
+
+
     </div>
   );
 }

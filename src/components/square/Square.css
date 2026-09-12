@@ -1,0 +1,223 @@
+/* Контейнер карточки фигуры делаем относительным, чтобы позиционировать уровень */
+.piece-card {
+  position: relative;
+  /* твои старые стили карточки фигуры... */
+}
+
+/* Стили плашки уровня */
+.piece-level-badge {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2c3e50;
+  color: #bdc3c7;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 1px 6px;
+  border-radius: 10px;
+  border: 1px solid #455a64;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+}
+
+/* Если фигура белая и прокачана, делаем рамку золотистой */
+.piece-card.w .piece-level-badge {
+  color: #f1c40f;
+  border-color: #f1c40f;
+}
+
+/* Эффект свечения для максимального 5-го уровня */
+.max-level-shine {
+  background: #f1c40f !important;
+  color: #1a252f !important;
+  border-color: #fff !important;
+  box-shadow: 0 0 8px #f1c40f;
+  animation: levelPulse 2s infinite ease-in-out;
+}
+
+@keyframes levelPulse {
+  0% {
+    box-shadow: 0 0 4px #f1c40f;
+  }
+
+  50% {
+    box-shadow: 0 0 12px #f1c40f;
+  }
+
+  100% {
+    box-shadow: 0 0 4px #f1c40f;
+  }
+}
+
+
+/* ТЕНЬ под фигуркой — лежит ровно на клетке */
+.piece-shadow {
+  position: absolute;
+  width: 65%;
+  height: 65%;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  filter: blur(5px);
+  transform: translateZ(2px);
+  /* Тень лежит прямо поверх клетки */
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ФИГУРКА: Полностью выпрямлена на камеру игрока и поднята над доской */
+.piece-card {
+  position: absolute;
+  width: 85%;
+  height: 115%;
+  bottom: 20%;
+  right: 20px;
+  /* Сместили вверх, чтобы основание встало на тень */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  z-index: 5;
+  transform-style: preserve-3d;
+
+  /* Зеркальный разворот: rotateZ(-45deg) компенсирует поворот доски, 
+     а translateZ(15px) вытаскивает фигуру, чтобы она не тонула в текстуре */
+  transform: rotateZ(-45deg) rotateX(-55deg) translateZ(105px);
+
+  /* Плавное появление/приземление при рендере */
+  animation: chessJumpArc 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards;
+  pointer-events: auto;
+}
+
+
+/* Округление картинок аватаров для стимпанк-стиля */
+.piece-image-container {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 3px solid #34495e;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  background: #1a252f;
+}
+
+.piece-card.w .piece-image-container {
+  border-color: #f1c40f;
+}
+
+.piece-card.b .piece-image-container {
+  border-color: #e74c3c;
+}
+
+.piece-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+/* Анимация прыжка по дуге с учетом нового разворота стороны */
+@keyframes chessJumpArc {
+  0% {
+    transform: rotateZ(-45deg) rotateX(-55deg) translateZ(105px) scale(0.9);
+    filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
+  }
+
+  50% {
+    /* Пик прыжка: фигура взлетает по оси Z на 70px и немного увеличивается */
+    transform: rotateZ(-45deg) rotateX(-55deg) translateZ(70px) scale(1.15);
+    filter: drop-shadow(0 25px 15px rgba(0, 0, 0, 0.5));
+  }
+
+  100% {
+    /* Мягкое приземление обратно на высоту 15px над ячейкой */
+    transform: rotateZ(-45deg) rotateX(-55deg) translateZ(105px) scale(1);
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
+  }
+}
+
+
+.piece-card {
+  /* Добавь это свойство к классу .piece-card, который мы прописали выше */
+  animation: chessJumpArc 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+
+/* ОБЩИЙ КОНТЕЙНЕР ДЛЯ ПОП-АПОВ УРОНА */
+.damage-popup,
+.death-popup {
+  position: absolute;
+  top: -30%;
+  /* Начинаем полет чуть выше середины клетки */
+  left: 50%;
+  transform-style: preserve-3d;
+  font-family: 'Impact', 'Arial Black', sans-serif;
+  font-weight: bold;
+  text-shadow: 0 4px 6px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  pointer-events: none;
+  /* Чтобы текст не мешал кликать по доске */
+  white-space: nowrap;
+
+  /* Разворачиваем текст на камеру игрока, как и фигурки! 
+     rotateZ(-45deg) компенсирует поворот доски, а rotateX(-55deg) выпрямляет */
+  transform: translate(-50%, -50%) rotateZ(-45deg) rotateX(-55deg);
+}
+
+/* СТИЛИЗАЦИЯ ЦВЕТА УРОНА */
+.damage-popup {
+  color: #ff3838;
+  /* Ярко-красный сочный урон */
+  font-size: 26px;
+  /* Запускаем анимацию взлета и растворения */
+  animation: damageFloatUp 1s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+/* СТИЛИЗАЦИЯ СМЕРТИ */
+.death-popup {
+  font-size: 32px;
+  animation: deathSkullPop 1.2s ease-in-out forwards;
+}
+
+/* 🚀 АНИМАЦИЯ ПОЛЕТА УРОНА ВВЕРХ (по оси Z) */
+@keyframes damageFloatUp {
+  0% {
+    /* На старте текст прижат к фигуре и мелкий */
+    transform: translate(-50%, 0) rotateZ(-45deg) rotateX(-55deg) translateZ(30px) scale(0.6);
+    opacity: 1;
+  }
+
+  20% {
+    /* Быстро вылетает, увеличивается и становится полностью видимым */
+    transform: translate(-50%, -20px) rotateZ(-45deg) rotateX(-55deg) translateZ(90px) scale(1.2);
+    opacity: 1;
+  }
+
+  100% {
+    /* Плавно улетает высоко в небо (Z=160px) и растворяется */
+    transform: translate(-50%, -40px) rotateZ(-45deg) rotateX(-55deg) translateZ(160px) scale(0.9);
+    opacity: 0;
+  }
+}
+
+/* 💀 АНИМАЦИЯ ДЛЯ ЧЕРЕПА ПРИ СМЕРТИ */
+@keyframes deathSkullPop {
+  0% {
+    transform: translate(-50%, 0) rotateZ(-45deg) rotateX(-55deg) translateZ(40px) scale(0.5);
+    opacity: 0;
+  }
+
+  30% {
+    /* Эффект сильного удара/взрыва */
+    transform: translate(-50%, -10px) rotateZ(-45deg) rotateX(-55deg) translateZ(100px) scale(1.5);
+    opacity: 1;
+    filter: drop-shadow(0 0 15px #ff3838);
+  }
+
+  100% {
+    /* Медленно испаряется */
+    transform: translate(-50%, -20px) rotateZ(-45deg) rotateX(-55deg) translateZ(130px) scale(1);
+    opacity: 0;
+  }
+}

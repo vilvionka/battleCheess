@@ -11,12 +11,21 @@
   top: 0;
   left: 0;
   width: 100%;
+  z-index: 9;
+}
+
+.header-side {
+  width: 350px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
 .header-user-info {
   display: flex;
   align-items: center;
   gap: 12px;
+  padding-left: 5px !important;
 }
 
 .player-avatar {
@@ -24,6 +33,12 @@
   background: #2c3e50;
   padding: 6px;
   border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .user-text {
@@ -48,9 +63,10 @@
   gap: 8px;
   background: #2c3e50;
   padding: 6px 14px;
-  border-radius: 20px;
+  border-radius: 6px;
   font-weight: bold;
   border: 1px solid #f1c40f;
+  height: 45px;
 }
 
 .currency-icon {
@@ -77,6 +93,7 @@
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s;
+  height: 45px;
 }
 
 .header-btn:hover {
@@ -88,12 +105,13 @@
   background: #e74c3c;
   color: white;
   border: none;
-  padding: 8px 12px;
+  padding: 16px 12px;
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
   font-weight: bold;
   transition: background 0.2s;
+  height: 45px;
 }
 
 .header-logout-btn:hover {

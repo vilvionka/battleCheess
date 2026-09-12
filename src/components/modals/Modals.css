@@ -170,3 +170,10 @@
   padding: 30px;
   color: #bdc3c7;
 }
+
+.piece-passive-desc {
+  font-size: 13px;
+  color: #bdc3c7;
+  margin: 1px 0 0 0;
+  padding-right: 10px;
+}

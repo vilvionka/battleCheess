@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { BASE_PIECES, PIECE_TYPES } from '../game/constans'; // Проверьте правильность пути к константам
+import { UPGRADE_RULES } from '../game/upgradeRules';
 
 export const useTacticalStore = create(devtools((set, get) => ({
   boardSize: 8,
@@ -55,6 +56,12 @@ export const useTacticalStore = create(devtools((set, get) => ({
     if (!userProfile) return;
 
     const currentLevel = userPieces[pieceType] || 1;
+
+    // ЖЕСТКИЙ БЛОК: Запрещаем качать выше 5 уровня
+    if (currentLevel >= 5) {
+      alert('Фигура уже достигла максимального уровня прокачки!');
+      return;
+    }
 
     // Рассчитываем стоимость улучшения (базовая стоимость * 1.5 за каждый уровень)
     const baseCosts = { Pawn: 10, Knight: 15, Bishop: 15, Rook: 20, Queen: 30, King: 40 };
@@ -112,6 +119,39 @@ export const useTacticalStore = create(devtools((set, get) => ({
 
   // Инициализация игры: выставляем сразу по 6 фигур каждому игроку
   initGame: () => {
+    const { userPieces } = get();
+
+    // Базовые характеристики фигур Игрока А (как в первой части вашего кода)
+    const BASE_WHITE_PIECES = {
+      Pawn: { type: 'Pawn', color: 'w', hp: 5, maxHp: 5, atk: 3, def: 1, speed: 5, atb: 0 },
+      Knight: { type: 'Knight', color: 'w', hp: 5, maxHp: 5, atk: 4, def: 2, speed: 6, atb: 0 },
+      Bishop: { type: 'Bishop', color: 'w', hp: 6, maxHp: 6, atk: 4, def: 1, speed: 7, atb: 0 },
+      King: { type: 'King', color: 'w', hp: 10, maxHp: 10, atk: 5, def: 3, speed: 5, atb: 0 },
+      Rook: { type: 'Rook', color: 'w', hp: 7, maxHp: 7, atk: 5, def: 3, speed: 5, atb: 0 },
+      Queen: { type: 'Queen', color: 'w', hp: 5, maxHp: 5, atk: 8, def: 2, speed: 8, atb: 0 },
+    };
+
+    // Динамически собираем скамейку на основе уровней из Supabase/Zustand
+    const dynamicWhiteBench = Object.keys(BASE_WHITE_PIECES).map(type => {
+      const base = BASE_WHITE_PIECES[type];
+      const level = userPieces[type] || 1; // Если данных нет, по умолчанию 1 уровень
+
+      // Достаем бонусы для текущего уровня из таблицы правил
+      const bonus = UPGRADE_RULES[type]?.bonuses[level] || { hp: 0, maxHp: 0, atk: 0, def: 0, speed: 0 };
+
+      return {
+        ...base,
+        id: `w-${type.toLowerCase()}`,
+        level: level, // Записываем уровень прямо в объект фигуры для отображения!
+        hp: base.hp + (bonus.hp || 0),
+        maxHp: base.maxHp + (bonus.maxHp || 0),
+        atk: base.atk + (bonus.atk || 0),
+        def: base.def + (bonus.def || 0),
+        speed: base.speed + (bonus.speed || 0),
+        passive: bonus.passive || null // Если есть пассивка 5-го уровня, она пойдет в бой
+      };
+    });
+
     set({
       board: {}, // Доска пустая, ждем расстановку
       gameStatus: 'setup',
@@ -122,15 +162,7 @@ export const useTacticalStore = create(devtools((set, get) => ({
       actionQueue: [],
       battleLogs: ['Началась фаза расстановки фигур. Разместите войска на нижней линии!'],
       gameSnapshot: null,
-      // Сбрасываем скамейку в дефолт
-      whiteBench: [
-        { type: 'Pawn', color: 'w', hp: 5, maxHp: 5, atk: 3, def: 1, speed: 5, atb: 0, id: 'w-pawn' },
-        { type: 'Knight', color: 'w', hp: 5, maxHp: 5, atk: 4, def: 2, speed: 6, atb: 0, id: 'w-knight' },
-        { type: 'Bishop', color: 'w', hp: 6, maxHp: 6, atk: 4, def: 1, speed: 7, atb: 0, id: 'w-bishop' },
-        { type: 'King', color: 'w', hp: 10, maxHp: 10, atk: 5, def: 3, speed: 5, atb: 0, id: 'w-king' },
-        { type: 'Rook', color: 'w', hp: 7, maxHp: 7, atk: 5, def: 3, speed: 5, atb: 0, id: 'w-rook' },
-        { type: 'Queen', color: 'w', hp: 5, maxHp: 5, atk: 8, def: 2, speed: 8, atb: 0, id: 'w-queen' },
-      ]
+      whiteBench: dynamicWhiteBench // Кладим в стор прокачанные фигуры
     });
   },
 
@@ -508,18 +540,72 @@ export const useTacticalStore = create(devtools((set, get) => ({
     // ==========================================
     // 6. Проверка условий победы
     // ==========================================
+    // ==========================================
+    // 6. Проверка условий победы и запись в БД Supabase
+    // ==========================================
     const figures = Object.values(newBoard);
     const isWhiteKingAlive = figures.some(p => p.type === 'King' && p.color === 'w');
     const isBlackKingAlive = figures.some(p => p.type === 'King' && p.color === 'b');
 
+    // Функция для обновления статистики в Supabase
+    const updateDatabaseStats = async (isWin) => {
+      const { userProfile } = get();
+      if (!userProfile) return; // Если профиль игрока не загружен, ничего не делаем
+
+      try {
+        const { supabase } = await import('../supabaseClient');
+
+        // Награда: за победу даем 15 очков, за поражение ничего не списываем
+        const rewardPoints = isWin ? 15 : 0;
+        const newWins = isWin ? userProfile.wins + 1 : userProfile.wins;
+        const newLosses = isWin ? userProfile.losses : userProfile.losses + 1;
+        const newVictoryPoints = userProfile.victory_points + rewardPoints;
+
+        // Отправляем апдейт в таблицу profiles
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            wins: newWins,
+            losses: newLosses,
+            victory_points: newVictoryPoints
+          })
+          .eq('id', userProfile.id);
+
+        if (error) throw error;
+
+        // Обновляем локальное состояние в Zustand, чтобы Header сразу перерисовал новые очки
+        set({
+          userProfile: {
+            ...userProfile,
+            wins: newWins,
+            losses: newLosses,
+            victory_points: newVictoryPoints
+          }
+        });
+
+        if (isWin) {
+          get().addLog(`🎉 Вы победили! Вам начислено +${rewardPoints} Очков Победы.`);
+        } else {
+          get().addLog(`💀 Вы проиграли. Попробуйте изменить тактику расстановки.`);
+        }
+
+      } catch (err) {
+        console.error('Ошибка при сохранении статистики матча:', err.message);
+      }
+    };
+
+    // Проверяем, кто именно погиб
     if (!isWhiteKingAlive) {
       set({ gameStatus: 'b-win' });
+      updateDatabaseStats(false); // Игрок проиграл (Черные победили)
       return;
     }
     if (!isBlackKingAlive) {
       set({ gameStatus: 'w-win' });
+      updateDatabaseStats(true); // Игрок победил (Белые победили)
       return;
     }
+
 
     // ==========================================
     // 7. Смена фаз

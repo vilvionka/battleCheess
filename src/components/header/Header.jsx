@@ -12,29 +12,39 @@ export function Header() {
 
   return (
     <header className="game-header">
-      <div className="header-user-info">
-        <span className="player-avatar">🛡️</span>
-        <div className="user-text">
-          <span className="player-name">{userProfile.username}</span>
-          <span className="player-stats-brief">Победы: <b>{userProfile.wins}</b> | Металл: <b>{userProfile.losses}</b></span>
+
+      <div className="header-side">
+        <div className="header-user-info header-currency">
+          <span className="player-avatar">🛡️</span>
+          <div className="user-text">
+            <span className="player-name">{userProfile.username}</span>
+            <span className="player-stats-brief">Победы: <b>{userProfile.wins}</b> | Металл: <b>{userProfile.losses}</b></span>
+          </div>
+        </div>
+        <div className="header-currency">
+          <span className="currency-icon">🏆</span>
+          <span className="currency-value">{userProfile.victory_points} <small>очков</small></span>
         </div>
       </div>
 
-      <div className="header-currency">
-        <span className="currency-icon">🏆</span>
-        <span className="currency-value">{userProfile.victory_points} <small>очков</small></span>
+
+      <div className="header-center">
+        <span className="name-game">BattleChess</span>
       </div>
 
-      <div className="header-actions">
-        <button className="header-btn upgrade-btn" onClick={() => setUpgradeMenuOpen(true)}>
-          ⚔️ Прокачка
-        </button>
-        <button className="header-btn leaderboard-btn" onClick={() => setLeaderboardOpen(true)}>
-          📜 Рейтинг
-        </button>
-        <button className="header-logout-btn" onClick={() => supabase.auth.signOut()}>
-          🚪 Выйти
-        </button>
+
+      <div className="header-side">
+        <div className="header-actions">
+          <button className="header-btn upgrade-btn" onClick={() => setUpgradeMenuOpen(true)}>
+            ⚔️ Прокачка
+          </button>
+          <button className="header-btn leaderboard-btn" onClick={() => setLeaderboardOpen(true)}>
+            📜 Рейтинг
+          </button>
+          <button className="header-logout-btn" onClick={() => supabase.auth.signOut()}>
+            🚪 Выйти
+          </button>
+        </div>
       </div>
     </header>
   );
