@@ -3,6 +3,9 @@ import { devtools } from 'zustand/middleware';
 import { BASE_PIECES, PIECE_TYPES } from '../game/constans'; // Проверьте правильность пути к константам
 import { UPGRADE_RULES } from '../game/upgradeRules';
 
+
+
+
 export const useTacticalStore = create(devtools((set, get) => ({
   boardSize: 8,
   board: {}, // Структура: { 'row,col': { type, color, hp, maxHp, atk, def, speed, atb } }
@@ -207,37 +210,107 @@ export const useTacticalStore = create(devtools((set, get) => ({
   },
 
 
+  // Автоматическая рандомная расстановка и динамическая прокачка ИИ (Черные)
   autoPlaceBlackPieces: (currentBoard) => {
-    const blackPieces = [
-      { type: 'Pawn', color: 'b', hp: 4, maxHp: 4, atk: 3, def: 1, speed: 5, atb: 0 },
-      { type: 'Knight', color: 'b', hp: 5, maxHp: 5, atk: 4, def: 2, speed: 6, atb: 0 },
-      { type: 'Bishop', color: 'b', hp: 6, maxHp: 6, atk: 12, def: 1, speed: 2, atb: 0 },
-      { type: 'King', color: 'b', hp: 10, maxHp: 10, atk: 5, def: 3, speed: 5, atb: 0 },
-      { type: 'Rook', color: 'b', hp: 7, maxHp: 7, atk: 5, def: 3, speed: 5, atb: 0 },
-      { type: 'Queen', color: 'b', hp: 6, maxHp: 6, atk: 6, def: 2, speed: 9, atb: 0 },
-    ];
+    const { userPieces } = get();
 
-    const newBoard = { ...currentBoard };
-    // Доступные колонки на первой линии черных (ряд 0)
-    const availableCols = [1, 2, 3, 4, 5, 6];
+    // 1. СЧИТАЕМ ИНВЕСТИЦИИ ИГРОКА (Сколько всего очков победы потрачено на текущие уровни)
+    let totalPlayerSpent = 0;
+    const baseCosts = { Pawn: 10, Knight: 15, Bishop: 15, Rook: 20, Queen: 30, King: 40 };
 
-    // Перемешиваем колонки случайным образом (алгоритм Фишера-Йетса)
-    for (let i = availableCols.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [availableCols[i], availableCols[j]] = [availableCols[j], availableCols[i]];
+    Object.keys(baseCosts).forEach(type => {
+      const currentLevel = userPieces[type] || 1;
+      // Суммируем стоимость каждого купленного уровня для этой фигуры
+      for (let lvl = 1; lvl < currentLevel; lvl++) {
+        totalPlayerSpent += Math.ceil(baseCosts[type] * Math.pow(1.5, lvl - 1));
+      }
+    });
+
+    // 2. СИМУЛЯЦИЯ КУЗНИЦЫ ДЛЯ ИИ (Тратим этот же бюджет случайным образом)
+    const aiLevels = { Pawn: 1, Knight: 1, Bishop: 1, Rook: 1, Queen: 1, King: 1 };
+    let aiBudget = totalPlayerSpent;
+    const pieceTypes = ['Pawn', 'Knight', 'Bishop', 'Rook', 'Queen', 'King'];
+
+    // Компьютер пытается тратить очки, пока они есть
+    let attempts = 0;
+    while (aiBudget > 0 && attempts < 100) {
+      attempts++;
+      // Выбираем случайную фигуру
+      const randomType = pieceTypes[Math.floor(Math.random() * pieceTypes.length)];
+      const currentAiLvl = aiLevels[randomType];
+
+      // Проверяем ограничение максимального 5-го уровня
+      if (currentAiLvl < 5) {
+        const cost = Math.ceil(baseCosts[randomType] * Math.pow(1.5, currentAiLvl - 1));
+
+        // Если хватает бюджета — ИИ "покупает" уровень себе
+        if (aiBudget >= cost) {
+          aiBudget -= cost;
+          aiLevels[randomType] += 1;
+        }
+      }
     }
 
-    // Расставляем черные фигуры по перемешанным клеткам ряда 0
-    blackPieces.forEach((piece, index) => {
+    // 3. БАЗОВЫЕ СТАТЫ ДЛЯ ЧЕРНЫХ ФИГУР
+    const BASE_BLACK_PIECES = {
+      Pawn: { type: 'Pawn', color: 'b', hp: 4, maxHp: 4, atk: 3, def: 1, speed: 5, atb: 0 },
+      Knight: { type: 'Knight', color: 'b', hp: 5, maxHp: 5, atk: 4, def: 2, speed: 6, atb: 0 },
+      Bishop: { type: 'Bishop', color: 'b', hp: 6, maxHp: 6, atk: 12, def: 1, speed: 2, atb: 0 },
+      King: { type: 'King', color: 'b', hp: 10, maxHp: 10, atk: 5, def: 3, speed: 5, atb: 0 },
+      Rook: { type: 'Rook', color: 'b', hp: 7, maxHp: 7, atk: 5, def: 3, speed: 5, atb: 0 },
+      Queen: { type: 'Queen', color: 'b', hp: 6, maxHp: 6, atk: 6, def: 2, speed: 9, atb: 0 },
+    };
+
+    // Собираем массив готовых черных фигур с учетом случайной прокачки ИИ
+
+    const dynamicBlackPieces = Object.keys(BASE_BLACK_PIECES).map(type => {
+      const base = BASE_BLACK_PIECES[type];
+      const level = aiLevels[type];
+
+      // Находим бонус для уровня, сгенерированного для ИИ
+      const bonus = UPGRADE_RULES[type]?.bonuses[level] || { hp: 0, maxHp: 0, atk: 0, def: 0, speed: 0 };
+
+      return {
+        ...base,
+        level: level, // Записываем сгенерированный уровень ИИ в объект для UI
+        hp: base.hp + (bonus.hp || 0),
+        maxHp: base.maxHp + (bonus.maxHp || 0),
+        atk: base.atk + (bonus.atk || 0),
+        def: base.def + (bonus.def || 0),
+        speed: base.speed + (bonus.speed || 0),
+        passive: bonus.passive || null // ИИ тоже получает суперспособности 5 уровня!
+      };
+    });
+
+    // 4. РАНДОМНАЯ РАССТАНОВКА НА ПЕРВОЙ ЛИНИИ (Ряд 0)
+    const newBoard = { ...currentBoard };
+    const availableCols = [1, 2, 3, 4, 5, 6];
+
+    // Перемешиваем колонки (алгоритм Фишера-Йетса)
+    for (let i = availableCols.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = availableCols[i];
+      availableCols[i] = availableCols[j];
+      availableCols[j] = temp;
+    }
+
+    // Выставляем прокачанные фигуры ИИ на доску
+    dynamicBlackPieces.forEach((piece, index) => {
       const col = availableCols[index];
       newBoard[`0,${col}`] = piece;
+
+      // Если у ИИ получилась фигура 5 уровня, пишем об этом в лог
+      if (piece.level === 5) {
+        get().addLog(`⚠️ Внимание! Компьютер выставил легендарного воина: Черный [${piece.type}] 5-го уровня!`);
+      }
     });
 
     // Переводим игру в активную фазу и считаем первый ход
     set({ board: newBoard, gameStatus: 'playing' });
-    get().addLog('Сражение началось! Компьютер разместил свои фигуры.');
+    get().addLog(`Сражение началось! Баланс сил соблюден: ИИ распределил ${totalPlayerSpent} очков на прокачку.`);
     get().calculateNextTurns();
   },
+
 
   undoTurn: () => {
     const { gameSnapshot } = get();
@@ -359,21 +432,17 @@ export const useTacticalStore = create(devtools((set, get) => ({
     }
     return targets;
   },
-  // Перемещение активной фигуры
   movePieceAction: (fromKey, toKey) => {
-    const { board, turnPhase, getAvailableTargets, addLog, gameSnapshot } = get();
+    const { board, turnPhase, getAvailableTargets, addLog } = get();
     if (!get().isValidMoveZone(fromKey, toKey)) return;
 
     const piece = board[fromKey];
 
-
+    // Сохранение снимка истории для Бевых ДО совершения шага
     if (piece.color === 'w' && turnPhase === 'action') {
-
-      // Проверяем: если в прошлый раз мы сохраняли этот же ход (совпадает activeSquareKey) 
-      // И количество логов не изменилось — значит это старый снимок, его НАДО обновить свежим ходом!
       set({
         gameSnapshot: {
-          board: JSON.parse(JSON.stringify(board)), // Чистая доска ДО текущего шага
+          board: JSON.parse(JSON.stringify(board)),
           gameStatus: get().gameStatus,
           activeSquareKey: fromKey,
           turnPhase: 'action',
@@ -383,22 +452,66 @@ export const useTacticalStore = create(devtools((set, get) => ({
       });
     }
 
-
     const playerName = piece.color === 'w' ? 'Игрок А' : 'Игрок B (Компьютер)';
     const pieceNames = { King: 'Король', Queen: 'Ферзь', Rook: 'Ладья', Bishop: 'Слон', Knight: 'Конь', Pawn: 'Пешка' };
-
-    // Формируем красивое имя, например: "Игрок А (Конь)"
     const pieceFullName = `${playerName} [${pieceNames[piece.type] || piece.type}]`;
 
-    const newBoard = { ...board };
+    // Создаем копию доски и перемещаем фигуру
+    let newBoard = { ...board };
     newBoard[toKey] = { ...newBoard[fromKey] };
     delete newBoard[fromKey];
 
+    // =========================================================================
+    // ВРОЖДЕННАЯ СПОСОБНОСТЬ: ПРЕВРАЩЕНИЕ ПЕШКИ В ФЕРЗЯ ALWAYS
+    // =========================================================================
+    const [targetRow] = toKey.split(',').map(Number);
+
+    // Белая пешка дошла до 0 ряда или Черная пешка дошла до 7 ряда
+    const isPromotion = piece.type === 'Pawn' && ((piece.color === 'w' && targetRow === 0) || (piece.color === 'b' && targetRow === 7));
+
+    if (isPromotion) {
+      // Базовые характеристики Ферзя для Белых и Черных
+      const baseStats = piece.color === 'w'
+        ? { hp: 5, maxHp: 5, atk: 8, def: 2, speed: 8 }
+        : { hp: 6, maxHp: 6, atk: 6, def: 2, speed: 9 };
+
+      // Вычисляем уровень нового Ферзя
+      let targetLevel = 1;
+      if (piece.color === 'w') {
+        const { userPieces } = get();
+        targetLevel = userPieces['Queen'] || 1; // Берем уровень прокачки Ферзя игрока
+      } else {
+        targetLevel = piece.level || 1; // Для ИИ берем уровень самой пешки, которая дошла
+      }
+
+      // Подтягиваем бонусы характеристик для этого уровня Ферзя
+      const { UPGRADE_RULES } = get();
+      const bonus = UPGRADE_RULES['Queen']?.bonuses[targetLevel] || { hp: 0, maxHp: 0, atk: 0, def: 0, speed: 0 };
+
+      // Заменяем пешку на полноценного прокачанного Ферзя
+      newBoard[toKey] = {
+        type: 'Queen',
+        color: piece.color,
+        level: targetLevel,
+        hp: baseStats.hp + (bonus.hp || 0),
+        maxHp: baseStats.maxHp + (bonus.maxHp || 0),
+        atk: baseStats.atk + (bonus.atk || 0),
+        def: baseStats.def + (bonus.def || 0),
+        speed: baseStats.speed + (bonus.speed || 0),
+        atb: piece.atb, // Сохраняем шкалу хода
+        passive: bonus.passive || null // Пассивка "Казнь" включится, если Ферзь 5-го уровня
+      };
+
+      addLog(`✨ Коронация! ${pieceFullName} прорывается к краю и превращается в мощного Ферзя [Lvl ${targetLevel}]!`);
+    } else {
+      // Обычный лог движения
+      addLog(`${pieceFullName} ходит с клетки [${fromKey}] на клетку [${toKey}]`);
+    }
+
+    // Записываем обновленную доску в Zustand
     set({ board: newBoard });
 
-    // --- ВОТ ТУТ ДОБАВЛЯЕМ ЛОГ ДВИЖЕНИЯ ---
-    addLog(`${pieceFullName} ходит с клетки [${fromKey}] на клетку [${toKey}]`);
-
+    // Проверяем фазы хода дальше
     let nextPhase = 'end_turn';
     if (turnPhase === 'action') {
       const potentialTargets = getAvailableTargets(toKey);
@@ -413,23 +526,20 @@ export const useTacticalStore = create(devtools((set, get) => ({
     }
   },
 
-  // Проведение атаки активной фигурой
+
   executeAttack: (attackerKey, targetKey) => {
     const { board, getAdjacencyType, canPieceAttackInDirection, turnPhase } = get();
 
-    // 1. БЕЗОПАСНАЯ ПРОВЕРКА (Берем ссылки, ничего не копируя)
     const originalAttacker = board[attackerKey];
     const originalTarget = board[targetKey];
 
-    // Если кого-то нет — мгновенно и безопасно выходим, код никогда не упадет
     if (!originalAttacker || !originalTarget) return;
 
-    // --- ЖЕЛЕЗНЫЙ ТРИГГЕР ОБНОВЛЕНИЯ ИСТОРИИ ПРИ ПРЯМОМ УДАРЕ ---
-    // Если человек бьет сразу из фазы 'action' (без предварительного шага) — обновляем историю свежими данными
+    // Триггер обновления истории при прямом ударе из фазы action
     if (originalAttacker.color === 'w' && turnPhase === 'action') {
       set({
         gameSnapshot: {
-          board: JSON.parse(JSON.stringify(board)), // Чистая доска ДО удара
+          board: JSON.parse(JSON.stringify(board)),
           gameStatus: get().gameStatus,
           activeSquareKey: attackerKey,
           turnPhase: 'action',
@@ -439,18 +549,13 @@ export const useTacticalStore = create(devtools((set, get) => ({
       });
     }
 
-    // 2. ПОДГОТОВКА НОВЫХ ДАННЫХ
     const newBoard = { ...board };
     const newPopups = [];
     const newDeadPopups = [];
 
-    // Создаем изолированные копии объектов для безопасного изменения их HP
     const target = { ...originalTarget };
-    const attacker = { ...originalAttacker }; // ТЕПЕРЬ ПЕРЕМЕННАЯ СУЩЕСТВУЕТ И БЕЗОПАСНА
+    const attacker = { ...originalAttacker };
 
-
-    // Найди место в executeAttack ПЕРЕД проверкой условий победы (Шаг 6)
-    // Создаем текстовое описание боя:
     const attackerName = originalAttacker.color === 'w' ? 'Игрок А' : 'Игрок B (Компьютер)';
     const targetName = originalTarget.color === 'w' ? 'Игрок А' : 'Игрок B (Компьютер)';
     const pieceNames = { King: 'Король', Queen: 'Ферзь', Rook: 'Ладья', Bishop: 'Слон', Knight: 'Конь', Pawn: 'Пешка' };
@@ -458,34 +563,75 @@ export const useTacticalStore = create(devtools((set, get) => ({
     const attStr = `${attackerName} [${pieceNames[originalAttacker.type]}]`;
     const tarStr = `${targetName} [${pieceNames[originalTarget.type]}]`;
 
+    let logMessage = '';
 
+    // =========================================================================
+    // ПАССИВКА 1: УКЛОНЕНИЕ (Пешка 5 уровня, 25% шанс полностью избежать урона)
+    // =========================================================================
+    if (target.passive === 'evade' && Math.random() < 0.25) {
+      logMessage = `${attStr} атакует ${tarStr}, но цель ловко уклоняется от удара! 💨`;
 
-    // ==========================================
-    // 1. ПРЯМОЙ УРОН (Игрок бьет врага)
-    // ==========================================
-    const dmgToTarget = Math.max(1, attacker.atk - target.def);
-    // 1. Текст про основной удар
-    let logMessage = `${attStr} атакует ${tarStr} на клетке [${targetKey}] и наносит -${dmgToTarget} урона.`;
-    target.hp -= dmgToTarget;
+      // Показываем поп-ап уклонения вместо цифры урона
+      newPopups.push({ id: `${Date.now()}-ev-${Math.random()}`, squareKey: targetKey, amount: 'Промах' });
+    } else {
+      // =========================================================================
+      // РАСЧЕТ БАЗОВОГО УРОНА И ПАССИВКА 5: КАЗНЬ (Ферзь 5 уровня, +50% урона раненым)
+      // =========================================================================
+      let baseAtk = attacker.atk;
+      if (attacker.passive === 'execute' && target.hp <= target.maxHp / 2) {
+        baseAtk = Math.floor(baseAtk * 1.5);
+        logMessage += `[💥 КАЗНЬ] `;
+      }
 
-    const popupTargetId = `${Date.now()}-t-${Math.random()}`;
-    newPopups.push({ id: popupTargetId, squareKey: targetKey, amount: dmgToTarget });
+      let dmgToTarget = Math.max(1, baseAtk - target.def);
+      logMessage += `${attStr} атакует ${tarStr} на клетке [${targetKey}] и наносит -${dmgToTarget} урона.`;
 
-    // Обновление цели на доске
+      target.hp -= dmgToTarget;
+      newPopups.push({ id: `${Date.now()}-t-${Math.random()}`, squareKey: targetKey, amount: dmgToTarget });
+
+      // =========================================================================
+      // ПАССИВКА 3: ВАМПИРИЗМ (Слон 5 уровня, 50% отхила от нанесенного урона)
+      // =========================================================================
+      if (attacker.passive === 'lifesteal' && attacker.hp > 0) {
+        const healAmount = Math.floor(dmgToTarget * 0.5);
+        if (healAmount > 0) {
+          attacker.hp = Math.min(attacker.maxHp, attacker.hp + healAmount);
+          logMessage += ` Вкусив крови, Слон исцеляется на +${healAmount} HP.`;
+        }
+      }
+
+      // =========================================================================
+      // ПАССИВКА 4: ОТВЕТНЫЙ ШИП (Ладья 5 уровня, возвращает 2 ед. чистого урона)
+      // =========================================================================
+      if (target.passive === 'thorns' && attacker.hp > 0) {
+        attacker.hp -= 2;
+        logMessage += ` Острые шипы Ладьи возвращают -2 урона нападающему.`;
+        newPopups.push({ id: `${Date.now()}-th-${Math.random()}`, squareKey: attackerKey, amount: 2 });
+      }
+    }
+
+    // =========================================================================
+    // ПАССИВКА 6: БЕССМЕРТИЕ (Король 5 уровня, выживает с 1 HP один раз за игру)
+    // =========================================================================
+    if (target.hp <= 0 && target.passive === 'immortality' && !target.hasUsedImmortality) {
+      target.hp = 1;
+      target.hasUsedImmortality = true; // Вешаем флаг, чтобы способность сработала только 1 раз
+      logMessage += ` ✨ Королевский оберег спасает от гибели, оставляя 1 HP!`;
+    }
+
+    // Обработка смерти или выживания цели
     if (target.hp <= 0) {
-      delete newBoard[targetKey]; // Враг умер, удаляем из новой доски
+      delete newBoard[targetKey];
       newDeadPopups.push({ id: `${Date.now()}-dt-${Math.random()}`, squareKey: targetKey });
       logMessage += ` ${tarStr} погибает! 💀`;
     } else {
-      newBoard[targetKey] = target; // Враг выжил, сохраняем обновленную копию
+      newBoard[targetKey] = target;
     }
 
-
-
     // ==========================================
-    // 2. ЛОГИКА КОНТРУДАРА В ОТВЕТ (Только если цель выжила!)
+    // ЛОГИКА КОНТРУДАРА В ОТВЕТ (Только если цель выжила и нападающий жив)
     // ==========================================
-    if (target.hp > 0) {
+    if (target.hp > 0 && attacker.hp > 0) {
       const revAdjType = getAdjacencyType(targetKey, attackerKey);
 
       if (canPieceAttackInDirection(target.type, target.color, revAdjType, targetKey, attackerKey)) {
@@ -494,26 +640,20 @@ export const useTacticalStore = create(devtools((set, get) => ({
         logMessage += ` Получает контрудар на -${dmgToAttacker} урона.`;
         attacker.hp -= dmgToAttacker;
 
-        const popupAttackerId = `${Date.now()}-a-${Math.random()}`;
-        newPopups.push({ id: popupAttackerId, squareKey: attackerKey, amount: dmgToAttacker });
+        newPopups.push({ id: `${Date.now()}-a-${Math.random()}`, squareKey: attackerKey, amount: dmgToAttacker });
       }
     }
 
-    // ==========================================
-    // 3. Проверяем выживание самого нападающего
-    // ==========================================
+    // Проверяем выживание самого нападающего (мог умереть от шипов или контрудара)
     if (attacker.hp <= 0) {
       delete newBoard[attackerKey];
       newDeadPopups.push({ id: `${Date.now()}-da-${Math.random()}`, squareKey: attackerKey });
-      logMessage += ` ${attStr} погибает от ответного удара! 💀`;
-
+      logMessage += ` ${attStr} погибает в бою! 💀`;
     } else {
       newBoard[attackerKey] = attacker;
     }
 
-    // ==========================================
-    // 4. Менеджмент поп-апов урона
-    // ==========================================
+    // Менеджмент поп-апов урона
     if (newPopups.length > 0) {
       set((state) => ({ damagePopups: [...state.damagePopups, ...newPopups] }));
       setTimeout(() => {
@@ -522,9 +662,7 @@ export const useTacticalStore = create(devtools((set, get) => ({
       }, 1000);
     }
 
-    // ==========================================
-    // 5. Менеджмент поп-апов смертей
-    // ==========================================
+    // Менеджмент поп-апов смертей
     if (newDeadPopups.length > 0) {
       set((state) => ({ deadPopups: [...state.deadPopups, ...newDeadPopups] }));
       setTimeout(() => {
@@ -533,95 +671,74 @@ export const useTacticalStore = create(devtools((set, get) => ({
       }, 1000);
     }
 
-    // Записываем обновленную доску в Zustand
     set({ board: newBoard });
     get().addLog(logMessage);
 
-    // ==========================================
-    // 6. Проверка условий победы
-    // ==========================================
-    // ==========================================
-    // 6. Проверка условий победы и запись в БД Supabase
-    // ==========================================
+    // Проверка условий победы
     const figures = Object.values(newBoard);
     const isWhiteKingAlive = figures.some(p => p.type === 'King' && p.color === 'w');
     const isBlackKingAlive = figures.some(p => p.type === 'King' && p.color === 'b');
 
-    // Функция для обновления статистики в Supabase
+    // Функция сохранения статистики в Supabase
     const updateDatabaseStats = async (isWin) => {
       const { userProfile } = get();
-      if (!userProfile) return; // Если профиль игрока не загружен, ничего не делаем
+      if (!userProfile) return;
 
       try {
         const { supabase } = await import('../supabaseClient');
-
-        // Награда: за победу даем 15 очков, за поражение ничего не списываем
         const rewardPoints = isWin ? 15 : 0;
         const newWins = isWin ? userProfile.wins + 1 : userProfile.wins;
         const newLosses = isWin ? userProfile.losses : userProfile.losses + 1;
         const newVictoryPoints = userProfile.victory_points + rewardPoints;
 
-        // Отправляем апдейт в таблицу profiles
-        const { error } = await supabase
+        await supabase
           .from('profiles')
-          .update({
-            wins: newWins,
-            losses: newLosses,
-            victory_points: newVictoryPoints
-          })
+          .update({ wins: newWins, losses: newLosses, victory_points: newVictoryPoints })
           .eq('id', userProfile.id);
 
-        if (error) throw error;
-
-        // Обновляем локальное состояние в Zustand, чтобы Header сразу перерисовал новые очки
         set({
-          userProfile: {
-            ...userProfile,
-            wins: newWins,
-            losses: newLosses,
-            victory_points: newVictoryPoints
-          }
+          userProfile: { ...userProfile, wins: newWins, losses: newLosses, victory_points: newVictoryPoints }
         });
 
-        if (isWin) {
-          get().addLog(`🎉 Вы победили! Вам начислено +${rewardPoints} Очков Победы.`);
-        } else {
-          get().addLog(`💀 Вы проиграли. Попробуйте изменить тактику расстановки.`);
-        }
-
+        if (isWin) get().addLog(`🎉 Вы победили! Вам начислено +${rewardPoints} Очков Победы.`);
+        else get().addLog(`💀 Вы проиграли. Попробуйте изменить тактику расстановки.`);
       } catch (err) {
-        console.error('Ошибка при сохранении статистики матча:', err.message);
+        console.error('Ошибка сохранения статистики:', err.message);
       }
     };
 
-    // Проверяем, кто именно погиб
     if (!isWhiteKingAlive) {
       set({ gameStatus: 'b-win' });
-      updateDatabaseStats(false); // Игрок проиграл (Черные победили)
+      updateDatabaseStats(false);
       return;
     }
     if (!isBlackKingAlive) {
       set({ gameStatus: 'w-win' });
-      updateDatabaseStats(true); // Игрок победил (Белые победили)
+      updateDatabaseStats(true);
       return;
     }
 
-
-    // ==========================================
-    // 7. Смена фаз
-    // ==========================================
+    // Смена фаз
     let nextPhase = 'end_turn';
-    if (turnPhase === 'action' && newBoard[attackerKey]) {
+
+    // =========================================================================
+    // ПАССИВКА 2: ДВОЙНОЙ ХОД (Конь 5 уровня, 20% шанс не завершать ход после атаки)
+    // =========================================================================
+    if (attacker.passive === 'double_strike' && newBoard[attackerKey] && Math.random() < 0.20 && turnPhase === 'action') {
+      nextPhase = 'action'; // Фаза остается 'action', позволяя Коню походить или ударить еще раз!
+      get().addLog(`⚡ [ПОВТОРНЫЙ ХОД] Скорость Коня позволяет ему совершить еще одно действие!`);
+    } else if (turnPhase === 'action' && newBoard[attackerKey]) {
       nextPhase = 'has_attacked';
     }
 
     if (nextPhase === 'end_turn') {
       set({ activeSquareKey: null });
-      get().endTurn(); // Завершаем ход
+      get().endTurn();
     } else {
       set({ turnPhase: nextPhase });
     }
   },
+
 
 
   // Завершение хода

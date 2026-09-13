@@ -16,10 +16,10 @@ import './Board.css';
 // Импортируем картинки для Белых фигур
 import kingW from '../../assets/king_w.jpeg';
 import queenW from '../../assets/queen_w.jpeg';
-import rookW from '../../assets/rook_w.jpeg';
-import bishopW from '../../assets/bishop_w.jpeg';
-import knightW from '../../assets/knight_w.jpeg';
-import pawnW from '../../assets/pawn_w.jpeg';
+import rookW from '../../assets/rook_w.jpg';
+import bishopW from '../../assets/bishop_w.jpg';
+import knightW from '../../assets/knight_w.jpg';
+import pawnW from '../../assets/pawn_w.png';
 // Импортируем картинки для Черных фигур
 import kingB from '../../assets/king_b.jpg';
 import queenB from '../../assets/queen_b.jpg';
