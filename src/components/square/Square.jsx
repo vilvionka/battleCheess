@@ -39,7 +39,7 @@ export function Square({
   return (
     <div
       className={`square ${bgClass} ${mvClass}`}
-      onClick={() => gameStatus === 'playing' && handleSquareClick(row, col)}
+      onClick={() => handleSquareClick(row, col)}
       onDragOver={(e) => handleDragOver(e, row)}
       onDrop={(e) => handleDrop(e, row, col)}
     >

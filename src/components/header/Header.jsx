@@ -18,7 +18,7 @@ export function Header() {
           <span className="player-avatar">🛡️</span>
           <div className="user-text">
             <span className="player-name">{userProfile.username}</span>
-            <span className="player-stats-brief">Победы: <b>{userProfile.wins}</b> | Металл: <b>{userProfile.losses}</b></span>
+            <span className="player-stats-brief"><small>Победы:</small> <b>{userProfile.wins}</b> | <small>Металл:</small> <b>{userProfile.losses}</b></span>
           </div>
         </div>
         <div className="header-currency">
@@ -36,13 +36,13 @@ export function Header() {
       <div className="header-side">
         <div className="header-actions">
           <button className="header-btn upgrade-btn" onClick={() => setUpgradeMenuOpen(true)}>
-            ⚔️ Прокачка
+            ⚔️ <span>Прокачка</span>
           </button>
           <button className="header-btn leaderboard-btn" onClick={() => setLeaderboardOpen(true)}>
-            📜 Рейтинг
+            📜 <span>Рейтинг</span>
           </button>
           <button className="header-logout-btn" onClick={() => supabase.auth.signOut()}>
-            🚪 Выйти
+            🚪 <span>Выйти</span>
           </button>
         </div>
       </div>

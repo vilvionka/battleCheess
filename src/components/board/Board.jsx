@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTacticalStore } from '../../store/useTacticalStore';
 import { useTacticalAI } from '../../hooks/useTacticalAI'; // 1. Импортируем наш новый хук ИИ
 import { Chat } from '../chat/Chat';
@@ -65,13 +65,21 @@ export function Board() {
   const removeWhitePiece = useTacticalStore(state => state.removeWhitePiece);
 
   const loadUserData = useTacticalStore(state => state.loadUserData);
+  const userProfile = useTacticalStore(state => state.userProfile);
+
+  const [selectedBenchPieceId, setSelectedBenchPieceId] = useState(null);
+
 
 
   useTacticalAI();
-  useEffect(() => {
-    initGame();
-  }, [initGame]);
 
+  useEffect(() => {
+    if (userProfile) {
+      initGame();
+    }
+  }, [userProfile, initGame]);
+
+  // 1. Инициализируем загрузку данных юзера при входе
   useEffect(() => {
     const initUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -158,9 +166,24 @@ export function Board() {
 
 
   const handleSquareClick = (row, col) => {
-
     const key = `${row},${col}`;
-    if (!activeSquareKey) return;
+
+    // =========================================================================
+    // 🎯 1. РЕЖИМ РАССТАНОВКИ (SETUP) — Должен быть НАД боевыми проверками!
+    // =========================================================================
+    if (gameStatus === 'setup') {
+      // Если на скамейке выбрана фигура и мы кликаем по разрешенному 7-му ряду
+      if (selectedBenchPieceId && row === 7 && !board[key]) {
+        placeWhitePiece(selectedBenchPieceId, key);
+        setSelectedBenchPieceId(null); // Сбрасываем выделение после успешной установки
+      }
+      return; // Мгновенно выходим, чтобы в режиме setup боевой код ниже не ломал логику
+    }
+
+    // =========================================================================
+    // ⚔️ 2. РЕЖИМ БОЯ (PLAYING)
+    // =========================================================================
+    if (!activeSquareKey) return; // Боковая защита: в бою ходит только тот, чья очередь
 
     if (validMoves.includes(key)) {
       movePieceAction(activeSquareKey, key);
@@ -169,42 +192,49 @@ export function Board() {
     }
   };
 
+
+
   // 2. Генерируем одномерный массив индексов для сетки 8x8 (0 до 63)
   const gridCells = useMemo(() => Array.from({ length: boardSize * boardSize }), [boardSize]);
 
   // Изменяем финальный return компонента Board, добавляя скамейку слева:
+  if (!userProfile) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '100vw',
+        height: '100vh',
+        background: '#1a252f',
+        color: '#f1c40f',
+        fontSize: '24px',
+        fontWeight: 'bold',
+        fontFamily: 'sans-serif'
+      }}>
+        🛡️ Загрузка вашей армии и Кузницы...
+      </div>
+    );
+  }
   return (
     <>
+      <div className="orientation-blocker">
+        <div className="phone-icon-animate">🔄📱</div>
+        <h2>Горизонтальный режим арены</h2>
+        <p style={{ color: '#bdc3c7', marginTop: '10px', fontSize: '14px' }}>
+          Пожалуйста, разверните ваш телефон горизонтально (в альбомную ориентацию), чтобы выстроить тактическую расстановку войск.
+        </p>
+      </div>
       {/* Выводим Header в самый верх приложения */}
       <Header />
 
       {/* Рендерим модальные окна (они сами контролируют видимость) */}
       <UpgradeModal />
       <LeaderboardModal />
-      <div className="game-container">
-        <div className='game-left'>
-          {/* Если идет расстановка, показываем скамейку запасных вместо кнопок ходов */}
-          {gameStatus === 'setup' ? (
-            <Bench
-              handleBenchDragOver={handleBenchDragOver}
-              handleBenchDrop={handleBenchDrop}
-              whiteBench={whiteBench}
-              handleDragStart={handleDragStart}
-              PIECE_IMAGES={PIECE_IMAGES}
-            />
+      <div className={`game-container ${gameStatus === 'setup' ? 'start' : ''}`}>
 
-          ) : (
-            <>
-              <Button endTurn={endTurn} undoTurn={undoTurn} gameSnapshot={gameSnapshot} initGame={initGame} />
-              <Turn turn={actionQueue} board={board} img={PIECE_IMAGES} />
-            </>
-          )}
-        </div>
+        <div className={`game-center ${gameStatus === 'setup' ? 'start' : ''}`}>
 
-        <div className='game-center'>
-          <div className='ui-container'>
-
-          </div>
 
           <div className="board-grid" style={{ gridTemplateColumns: `repeat(${boardSize}, 1fr)` }}>
             {gridCells.map((_, index) => {
@@ -236,7 +266,28 @@ export function Board() {
         </div>
 
         <div className='game-left'>
-          <Chat />
+          {/* Если идет расстановка, показываем скамейку запасных вместо кнопок ходов */}
+          {gameStatus === 'setup' ? (
+            <Bench
+              selectedBenchPieceId={selectedBenchPieceId}
+              setSelectedBenchPieceId={setSelectedBenchPieceId}
+              handleBenchDragOver={handleBenchDragOver}
+              handleBenchDrop={handleBenchDrop}
+              whiteBench={whiteBench}
+              handleDragStart={handleDragStart}
+              PIECE_IMAGES={PIECE_IMAGES}
+            />
+
+          ) : (
+            <div className='game-left__top'>
+              <Button endTurn={endTurn} undoTurn={undoTurn} gameSnapshot={gameSnapshot} initGame={initGame} />
+              <Turn turn={actionQueue} board={board} img={PIECE_IMAGES} />
+            </div>
+          )}
+          {gameStatus !== 'setup' && (
+            <Chat />
+          )}
+
         </div>
         {gameStatus !== 'playing' && gameStatus !== 'setup' && (
           <Win initGame={initGame} gameStatus={gameStatus} />
@@ -244,4 +295,5 @@ export function Board() {
       </div>
     </>
   );
+
 }

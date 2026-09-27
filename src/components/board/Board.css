@@ -14,43 +14,131 @@
   text-align: center;
   display: block;
   width: 100%;
+
+  @media (max-width: 1170px) {
+    font-size: 30px;
+  }
+
+  @media (max-width: 900px) {
+    font-size: 24px;
+  }
 }
 
 
 .game-container {
   display: flex;
   align-items: center;
-  justify-content: center;
   height: 100vh;
   background-color: #978a8a;
   color: white;
   gap: 20px;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 0 30px;
   position: relative;
-  background-image: url(../../assets/bg6.jpg);
+  background-image: url(../../assets/bg0.jpg);
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
+  width: 100%;
+  padding-right: 230px;
+
+  @media (max-width: 1360px) {
+    padding: 50px;
+  }
+
+  @media (max-width: 999px) {
+    padding: 50px 0;
+  }
+
+}
+
+.game-container.start {
+  @media (max-width: 1360px) {
+    padding: 0px;
+  }
+
+  @media (max-width: 1170px) {
+    justify-content: center;
+  }
+
 }
 
 .game-center {
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  width: 800px;
+  flex-shrink: 0;
+  padding-bottom: 30px;
   align-items: center;
   justify-content: center;
-  height: 100vh;
-  width: 728px;
-  flex-shrink: 0;
-  padding-bottom: 10px;
-  display: flex;
-  padding-bottom: 30px;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: flex-end;
   position: relative;
-  margin-left: auto;
-  margin-right: auto;
+  perspective: 1800px;
+  /* Важно: создает глубину 3D пространства */
+  overflow: visible;
+
+  @media (max-width: 1360px) {
+    justify-content: flex-end;
+  }
+
+  @media (max-width: 1170px) {
+    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  @media (max-width: 999px) {
+    justify-content: flex-end;
+    margin-top: 110px;
+    padding: 0;
+  }
+
+  @media (max-width: 800px) {
+    width: 700px;
+    padding-bottom: 15px;
+  }
+
+  @media (max-width: 700px) {
+    width: 650px;
+  }
+}
+
+.selected-bench-item {
+  border-color: #f1c40f !important;
+  background: #415b76;
+}
+
+.game-center.start {
+  perspective: inherit;
+  justify-content: flex-end;
+  margin-top: -20px !important;
+}
+
+.game-center.start .board-grid {
+  transform-style: inherit;
+  transform: inherit;
+}
+
+.game-center.start .square {
+  width: 80px;
+  height: 80px;
+
+  @media (max-width: 1170px) {
+    width: 70px;
+    height: 70px;
+  }
+
+  @media (max-width: 999px) {
+    width: 55px;
+    height: 55px;
+  }
+}
+
+.game-center.start .piece-card {
+  animation: none;
+  transform: inherit;
+  bottom: inherit;
+  right: inherit;
 }
 
 .game-left {
@@ -67,13 +155,58 @@
   left: 20px;
   z-index: 4;
   opacity: 1;
+
+
+  @media (max-width: 1620px) {
+    justify-content: space-between;
+  }
+
+  @media (max-width: 1170px) {
+    left: 15px;
+    width: calc(100% - 30px);
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column-reverse;
+    margin-top: 0;
+    pointer-events: none;
+  }
+
+  @media (max-width: 999px) {
+    bottom: 10px;
+  }
 }
 
-.game-container .game-left:nth-child(3) {
-  left: initial;
-  right: 20px;
-  width: 500px;
+.start .game-left {
+  @media (max-width: 1170px) {
+    left: 50%;
+    transform: translateX(-50%);
+    width: 400px;
+    flex-direction: column;
+  }
 }
+
+.game-left__top {
+  width: 100%;
+  gap: 10px;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 1620px) {
+    display: flex;
+    flex-direction: column-reverse;
+    margin-top: 130px;
+    position: relative;
+  }
+
+  @media (max-width: 1170px) {
+    margin-top: 80px;
+    flex-direction: row-reverse;
+    margin-top: 0;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+}
+
 
 .ui-container {
   display: flex;
@@ -93,17 +226,40 @@
   display: flex;
   flex-direction: column;
   background: #2b2b2b;
-  padding: 10px;
   border-radius: 8px;
   width: 100%;
   box-sizing: border-box;
   padding: 16px;
+
+  @media (max-width: 1170px) {
+    padding: 0px;
+    width: 400px;
+    flex-shrink: 0;
+    background: transparent;
+  }
+
+  @media (max-width: 999px) {
+    width: 300px;
+  }
 }
 
 .ui-panel {
   flex-shrink: 0;
   display: flex;
-  gap: 20px;
+  gap: 10px;
+  pointer-events: auto;
+
+  @media (max-width: 1170px) {
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 350px;
+    height: 65px;
+  }
+
+  @media (max-width: 999px) {
+    width: 300px;
+    height: 43px;
+  }
 }
 
 
@@ -114,10 +270,37 @@
   justify-content: center;
   font-size: 3.5vmin;
   font-weight: bold;
-  cursor: pointer;
-  user-select: none;
   width: 110px;
   height: 110px;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  box-sizing: border-box;
+  pointer-events: auto;
+  aspect-ratio: 1;
+  transform-style: preserve-3d;
+  overflow: visible;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+
+  @media (max-width: 1360px) {
+    width: 80px;
+    height: 80px;
+  }
+
+  @media (max-width: 1170px) {
+    width: 70px;
+    height: 70px;
+  }
+
+  @media (max-width: 999px) {
+    width: 60px;
+    height: 60px;
+  }
+
+  @media (max-width: 899px) {
+    width: 55px;
+    height: 55px;
+  }
 }
 
 .white-sq {
@@ -152,7 +335,6 @@
 
 .end-turn {
   border: none;
-  margin: 10px auto;
   font-size: 12px;
   font-weight: 500;
   color: #fff;
@@ -162,13 +344,23 @@
   cursor: pointer;
   transition: .6s;
   flex-shrink: 0;
-
+  width: calc(35% - 20px/3);
   background: #ff9800;
   border: none;
   padding: 11px;
   color: white;
   border-radius: 8px;
   cursor: pointer;
+
+  @media (max-width: 1170px) {
+    width: calc(35% - 16px/3);
+  }
+
+  @media (max-width: 999px) {
+    height: 43px;
+    padding: 5px;
+    font-size: 12px;
+  }
 }
 
 .end-turn:hover {
@@ -177,7 +369,6 @@
 
 .start-turn {
   border: none;
-  margin: 10px auto;
   padding: 12px;
   font-size: 14px;
   font-weight: 500;
@@ -188,11 +379,21 @@
   display: block;
   cursor: pointer;
   transition: .6s;
+  width: calc(35% - 20px/3);
+
+  @media (max-width: 1170px) {
+    width: calc(35% - 16px/3);
+  }
+
+  @media (max-width: 999px) {
+    height: 43px;
+    padding: 5px;
+    font-size: 12px;
+  }
 }
 
 .undo-btn {
   border: none;
-  margin: 10px auto;
   padding: 12px;
   font-size: 14px;
   font-weight: 500;
@@ -204,6 +405,17 @@
   cursor: pointer;
   transition: .6s;
   flex-shrink: 0;
+  width: calc(30% - 20px/3);
+
+  @media (max-width: 1170px) {
+    width: calc(30% - 16px/3);
+  }
+
+  @media (max-width: 999px) {
+    height: 43px;
+    padding: 5px;
+    font-size: 12px;
+  }
 }
 
 .move-zone {
@@ -336,9 +548,7 @@
   }
 }
 
-.square {
-  position: relative;
-}
+
 
 .death-popup {
   position: absolute;
@@ -397,6 +607,12 @@
   border-bottom: 1px solid #3a3a44;
   text-align: left;
   padding-bottom: 4px;
+
+  @media (max-width: 1170px) {
+    font-size: 14px;
+    margin-bottom: 8px;
+    border: none;
+  }
 }
 
 .queue-line {
@@ -465,18 +681,7 @@
 
 
 
-/* КЛЕТКИ ДОСКИ */
-.square {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  user-select: none;
-  box-sizing: border-box;
-  pointer-events: auto;
-  cursor: pointer;
-}
+
 
 .white-sq {
   background: #f0d9b5;
@@ -555,6 +760,11 @@
   align-items: center;
   background: #333;
   transition: transform 0.2s;
+
+  @media (max-width: 999px) {
+    width: 43px;
+    height: 43px;
+  }
 }
 
 .queue-card.w {
@@ -641,17 +851,21 @@
 
 .battle-logs-container {
   margin-top: 20px;
-  background: #1e1e24;
+  background: #2c3e50;
   border: 2px solid #3a3a44;
   border-radius: 8px;
   padding: 12px;
   width: 100%;
   width: 100%;
   box-sizing: border-box;
+
+  @media (max-width: 1170px) {
+    display: none;
+  }
 }
 
 .logs-title {
-  color: #f1a80a;
+  color: #f1c40f;
   font-weight: bold;
   font-size: 18px;
   margin-bottom: 8px;
@@ -691,9 +905,10 @@
 /* Подсветка самого последнего (свежего) действия */
 .log-item.latest-log {
   color: #ffffff;
-  border-left-color: #4caf50;
-  background: rgba(76, 175, 80, 0.1);
+  border-left-color: #455a64;
+  background: #34495e;
   font-weight: 500;
+  border-radius: 4px;
 }
 
 .log-empty {
@@ -727,6 +942,20 @@
   color: #fff;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   width: 100%;
+  pointer-events: auto;
+
+  @media (max-width: 1620px) {
+    margin-top: 120px;
+  }
+
+  @media (max-width: 1170px) {
+    padding: 5px;
+    margin-top: 80px;
+  }
+
+  @media (max-width: 900px) {
+    margin-top: 70px;
+  }
 }
 
 .bench-title {
@@ -737,18 +966,34 @@
   align-items: center;
   gap: 10px;
   font-size: 28px;
+
+  @media (max-width: 1170px) {
+    font-size: 22px;
+    margin-bottom: 5px;
+  }
 }
 
 .bench-title span {
   color: #f1c40f;
   font-size: 18px;
   font-weight: bold;
+
+  @media (max-width: 1170px) {
+    font-size: 14px;
+
+  }
 }
 
 .bench-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
+
+  @media (max-width: 1170px) {
+    flex-wrap: wrap;
+    flex-direction: row;
+    gap: 5px;
+  }
 }
 
 .bench-piece-item {
@@ -761,6 +1006,11 @@
   cursor: grab;
   border: 1px solid #455a64;
   transition: transform 0.2s, background-color 0.2s;
+
+  @media (max-width: 1170px) {
+    width: calc(50% - 2.5px);
+    padding: 5px;
+  }
 }
 
 .bench-piece-item:active {
@@ -777,10 +1027,19 @@
   height: 40px;
   border-radius: 4px;
   object-fit: cover;
+
+  @media (max-width: 1170px) {
+    width: 35px;
+    height: 35px;
+  }
 }
 
 .bench-name {
   font-weight: 500;
+
+  @media (max-width: 1170px) {
+    font-size: 12px;
+  }
 }
 
 .setup-hint {
@@ -796,25 +1055,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-/* Главный контейнер центральной части */
-.game-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  perspective: 1800px;
-  /* Важно: создает глубину 3D пространства */
-  overflow: visible;
-}
 
 /* Сетка доски разворачивается в 3D */
 .board-grid {
@@ -835,18 +1075,7 @@
   background: transparent;
 }
 
-/* Стилизация самих клеток доски */
-.square {
-  aspect-ratio: 1;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform-style: preserve-3d;
-  overflow: visible;
-  /* Чтобы фигурки и тени могли вылезать за пределы клетки */
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
+
 
 .square.white-sq {
   background-color: #e0d4b8;
@@ -969,4 +1198,58 @@
 .square.selected {
   background-color: rgba(241, 196, 15, 0.55) !important;
   box-shadow: inset 0 0 12px #f1c40f;
+}
+
+
+
+
+
+/* Блокировщик экрана */
+.orientation-blocker {
+  display: none;
+  /* По умолчанию скрыт */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #111a24;
+  z-index: 99999;
+  color: white;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-family: sans-serif;
+  padding: 20px;
+  box-sizing: border-box;
+  z-index: 999;
+}
+
+/* Иконка поворота телефона */
+.phone-icon-animate {
+  font-size: 60px;
+  margin-bottom: 20px;
+  animation: rotatePhone 2s infinite ease-in-out;
+}
+
+@keyframes rotatePhone {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(-90deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* Включаем оверлей ТОЛЬКО если это мобилка на вертикальном экране (Portrait) */
+@media (orientation: portrait) and (max-width: 900px) {
+  .orientation-blocker {
+    display: flex;
+  }
 }
